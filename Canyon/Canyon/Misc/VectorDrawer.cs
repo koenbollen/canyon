@@ -92,6 +92,7 @@ namespace Canyon.Misc
             AddVector(Vector3.Zero, Vector3.UnitZ, Color.Blue);
 #endif // DEBUG
 
+            DrawOrder = 100;
         }
 
         protected override void LoadContent()

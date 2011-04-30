@@ -35,8 +35,8 @@ namespace Canyon.CameraSystem
         /// <param name="aspectRatio">The aspect ratio of the render result (commenly GraphicsDevice.Viewport.AspectRatio).</param>
         /// <param name="nearPlaneDistance">Near plane of this view.</param>
         /// <param name="farPlaneDistance">Far plane of this view.</param>
-        public BaseCamera(Vector3 position, Vector3 target, float aspectRatio, float nearPlaneDistance, float farPlaneDistance)
-            :this(Matrix.CreateLookAt(position, target, Vector3.Up), Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, nearPlaneDistance, farPlaneDistance))
+        public BaseCamera(Vector3 position, Vector3 target, Vector3 up, float aspectRatio, float nearPlaneDistance, float farPlaneDistance)
+            :this(Matrix.CreateLookAt(position, target, up), Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, nearPlaneDistance, farPlaneDistance))
         {
         }
     }

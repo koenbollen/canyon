@@ -13,7 +13,7 @@ namespace Canyon
         public static CanyonGame Instance { get; private set; }
         public static SimpleConsole Console { get; private set; }
         public static ScreenManager Screens { get; private set; }
-        public static ICamera Camera { get; private set; }
+        public static ICamera Camera { get; set; }
 
         private GraphicsDeviceManager graphics;
 
@@ -53,9 +53,12 @@ namespace Canyon
             this.Components.Add(CanyonGame.Screens = new ScreenManager(this, start));
 
             // Create a simple camera:
-            CanyonGame.Camera = new BaseCamera(Vector3.UnitZ*10, Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000.0f);
+            DebugCamera camera = new DebugCamera(this, new Vector3(-20, 60, -20), -MathHelper.Pi/4*3, -MathHelper.Pi/8, GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000.0f);
+            this.Components.Add(camera);
+            CanyonGame.Camera = camera;
 
             base.Initialize();
+            GC.Collect(); // TODO: Move to LoadScreen
         }
 
         protected override void LoadContent()
@@ -67,12 +70,15 @@ namespace Canyon
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
+            if (gameTime.TotalGameTime.TotalMinutes > 2)
+                this.Exit();
+
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.DarkSlateGray);
 
             base.Draw(gameTime);
         }

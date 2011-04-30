@@ -108,8 +108,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CameraSystem\BaseCamera.cs" />
+    <Compile Include="CameraSystem\DebugCamera.cs" />
     <Compile Include="CameraSystem\ICamera.cs" />
     <Compile Include="Entities\IEntity.cs" />
+    <Compile Include="Environment\Terrain.cs" />
+    <Compile Include="Environment\TerrainTile.cs" />
     <Compile Include="Misc\FrameCounter.cs" />
     <Compile Include="Misc\SimpleConsole.cs" />
     <Compile Include="Misc\Utils.cs" />

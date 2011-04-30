@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Canyon.Screens;
 using Canyon.Entities;
+using Canyon.Environment;
 
 namespace Canyon
 {
@@ -16,7 +17,14 @@ namespace Canyon
         public override void Initialize()
         {
             //this.Components.Add(this.player = new Player(Game, Vector3.Zero));
+            this.Components.Add(new Terrain(Game, "Heightmaps/riemers"));
             base.Initialize();
         }
+
+        protected override void LoadContent()
+        {
+            base.LoadContent();
+        }
+
     }
 }
