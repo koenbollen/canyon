@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Canyon.Screens;
 using Canyon.Misc;
-using Canyon.Screens.Canyon;
 using Canyon.CameraSystem;
 using System;
 
@@ -47,13 +46,14 @@ namespace Canyon
 
             // Add basics:
             this.Components.Add(new FrameCounter(this));
+            this.Components.Add(new VectorDrawer(this));
 
             // Initialize the sceen manager:
             Screen start = new GameScreen(this);
             this.Components.Add(CanyonGame.Screens = new ScreenManager(this, start));
 
             // Create a simple camera:
-            CanyonGame.Camera = new BaseCamera(Vector3.UnitZ, Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000.0f);
+            CanyonGame.Camera = new BaseCamera(Vector3.UnitZ*10, Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000.0f);
 
             base.Initialize();
         }
@@ -72,7 +72,7 @@ namespace Canyon
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Crimson);
+            GraphicsDevice.Clear(Color.Black);
 
             base.Draw(gameTime);
         }

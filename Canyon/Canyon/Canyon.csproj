@@ -109,13 +109,16 @@
   <ItemGroup>
     <Compile Include="CameraSystem\BaseCamera.cs" />
     <Compile Include="CameraSystem\ICamera.cs" />
+    <Compile Include="Entities\IEntity.cs" />
     <Compile Include="Misc\FrameCounter.cs" />
     <Compile Include="Misc\SimpleConsole.cs" />
     <Compile Include="Misc\Utils.cs" />
+    <Compile Include="Entities\Player.cs" />
+    <Compile Include="Misc\VectorDrawer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="CanyonGame.cs" />
-    <Compile Include="Screens\Canyon\GameScreen.cs" />
+    <Compile Include="GameScreen.cs" />
     <Compile Include="Screens\Screen.cs" />
     <Compile Include="Screens\ScreenManager.cs" />
   </ItemGroup>
