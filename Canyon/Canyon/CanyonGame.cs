@@ -1,10 +1,12 @@
+using System;
+using System.Globalization;
+using System.Threading;
+using Canyon.CameraSystem;
+using Canyon.Misc;
+using Canyon.Screens;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Canyon.Screens;
-using Canyon.Misc;
-using Canyon.CameraSystem;
-using System;
 
 namespace Canyon
 {
@@ -19,6 +21,8 @@ namespace Canyon
 
         public CanyonGame()
         {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
             CanyonGame.Instance = this;
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -29,7 +33,8 @@ namespace Canyon
             this.graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
             this.graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
 #else // !DEBUG
-            this.TargetElapsedTime = new TimeSpan(0, 0, 0, 0, 5);
+            this.TargetElapsedTime = new TimeSpan(0, 0, 0, 0, 1);
+            //this.IsFixedTimeStep = false;
             this.graphics.SynchronizeWithVerticalRetrace = false;
 #endif // !DEBUG
 
@@ -44,9 +49,10 @@ namespace Canyon
             // Start with the console, always the most important thing in a game:
             this.Components.Add(CanyonGame.Console = new SimpleConsole(this));
 
-            // Add basics:
+#if DEBUG
             this.Components.Add(new FrameCounter(this));
             this.Components.Add(new VectorDrawer(this));
+#endif // !DEBUG
 
             // Initialize the sceen manager:
             Screen start = new GameScreen(this);

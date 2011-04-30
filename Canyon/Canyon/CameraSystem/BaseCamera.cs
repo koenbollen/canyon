@@ -8,6 +8,8 @@ namespace Canyon.CameraSystem
 
         public Matrix Projection { get; protected set; }
 
+        public event OnCameraChanged CameraChanged;
+
         /// <summary>
         /// Initialize the View and Projection matrices to Matrix.Identity.
         /// </summary>
@@ -25,6 +27,8 @@ namespace Canyon.CameraSystem
         {
             this.View = view;
             this.Projection = projection;
+            if (CameraChanged != null)
+                CameraChanged(view, projection);
         }
 
         /// <summary>

@@ -92,7 +92,6 @@ namespace Canyon.Misc
             AddVector(Vector3.Zero, Vector3.UnitZ, Color.Blue);
 #endif // DEBUG
 
-            DrawOrder = 100;
         }
 
         protected override void LoadContent()
@@ -124,6 +123,8 @@ namespace Canyon.Misc
             effect.View = CanyonGame.Camera.View;
             effect.Projection = CanyonGame.Camera.Projection;
             effect.VertexColorEnabled = true;
+
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {

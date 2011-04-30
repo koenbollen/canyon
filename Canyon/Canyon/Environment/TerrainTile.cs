@@ -5,10 +5,15 @@ namespace Canyon.Environment
 {
     public struct TerrainTile
     {
-        public int Width;
-        public int Height;
-        public Vector3 Position;
-        public float[,] data;
+        public Vector2 Position;
         public VertexBuffer Buffer;
+        public BoundingBox BoundingBox;
+
+        public TerrainTile(Vector2 position, VertexBuffer buffer, BoundingBox boundingBox)
+        {
+            this.Position = position;
+            this.Buffer = buffer;
+            this.BoundingBox = boundingBox;
+        }
     }
 }

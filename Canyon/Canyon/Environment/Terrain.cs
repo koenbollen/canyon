@@ -1,13 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
 
 
 namespace Canyon.Environment
@@ -29,6 +24,8 @@ namespace Canyon.Environment
             VertexDeclaration IVertexType.VertexDeclaration { get { return VertexDeclaration; } }
         }
 
+        public int TileSize { get; private set; }
+
         public int Width { get; private set; }
         public int Height { get; private set; }
 
@@ -39,12 +36,12 @@ namespace Canyon.Environment
         private Texture2D heightmap;
         private float[,] data;
 
-        private Effect effect;
         private ContentManager content;
-        private VertexTerrain[] vertices;
-        private int[] indices;
-        private VertexBuffer buffer;
+        private Effect effect;
         private IndexBuffer index;
+        private TerrainTile[] tiles;
+
+        private BoundingFrustum frustum;
 
         public Terrain(Game game, string heightmap)
             : base(game)
@@ -54,8 +51,16 @@ namespace Canyon.Environment
 
         public override void Initialize()
         {
+            TileSize = 32;
+            CanyonGame.Camera.CameraChanged += new CameraSystem.OnCameraChanged(CameraChanged);
             base.Initialize();
             CanyonGame.Console.Trace("Terrain initialized.");
+        }
+
+        void CameraChanged(Matrix view, Matrix projection)
+        {
+            if( !Keyboard.GetState().IsKeyDown(Keys.LeftAlt) )
+                this.frustum = new BoundingFrustum(view * projection);
         }
 
         protected override void LoadContent()
@@ -64,6 +69,8 @@ namespace Canyon.Environment
             this.content.RootDirectory = "Content";
             this.effect = content.Load<Effect>("FX/terrain");
             this.heightmap = content.Load<Texture2D>(this.heightmapAsset);
+
+            CanyonGame.Console.Debug("Loading heightmap of " + this.heightmap.Width + "x" + this.heightmap.Height + " (TileSize is " + TileSize + ").");
 
             this.LoadData(); // Width and Height are available from here on out.
             this.LoadVertices();
@@ -102,31 +109,62 @@ namespace Canyon.Environment
         /// </summary>
         private void LoadVertices()
         {
-            this.vertices = new VertexTerrain[this.Width * this.Height];
-            for (int x = 0; x < this.Width; x++)
+
+            TileSize = Math.Min(Math.Min(this.Width, this.Height), TileSize);
+
+            int widthInTiles = (int)Math.Ceiling((this.Width-1) / (double)(TileSize));
+            int heightInTiles = (int)Math.Ceiling((this.Height-1) / (double)(TileSize));
+
+            this.tiles = new TerrainTile[widthInTiles * heightInTiles];
+
+            for (int ty = 0; ty < heightInTiles; ty++)
             {
-                for (int y = 0; y < this.Height; y++)
+                for (int tx = 0; tx < widthInTiles; tx++)
                 {
-                    int i = x + y * this.Width;
-                    this.vertices[i].Position = new Vector3(x, data[x, y], y);
+                    Vector2 position = new Vector2(tx, ty);
+
+                    int width = TileSize + 1;
+                    int height = TileSize + 1;
+
+                    VertexTerrain[] vertices = new VertexTerrain[width * height];
+
+                    Vector3 bbmax = Vector3.One * float.MinValue;
+                    Vector3 bbmin = Vector3.One * float.MaxValue;
+                    for (int x = 0; x < width; x++)
+                    {
+                        for (int y = 0; y < height; y++)
+                        {
+                            int rx = (tx * TileSize + x);
+                            int ry = (ty * TileSize + y);
+                            int ri = rx + ry * this.Width;
+                            int i = x + y * width;
+                            vertices[i].Position = new Vector3(rx, data[Math.Min(rx,this.Width-1), Math.Min(ry,this.Height-1)], ry);
+                            bbmax = Vector3.Max(bbmax, vertices[i].Position);
+                            bbmin = Vector3.Min(bbmin, vertices[i].Position);
+                        }
+                    }
+
+                    VertexBuffer buffer = new VertexBuffer(GraphicsDevice, typeof(VertexTerrain), vertices.Length, BufferUsage.None);
+                    buffer.SetData(vertices);
+
+                    tiles[ty * widthInTiles + tx] = new TerrainTile(position, buffer, new BoundingBox(bbmin, bbmax));
                 }
             }
-            this.buffer = new VertexBuffer(GraphicsDevice, typeof(VertexTerrain), this.Width * this.Height, BufferUsage.None);
-            this.buffer.SetData(this.vertices);
         }
 
         private void LoadIndices()
         {
-            indices = new int[(this.Width - 1) * (this.Height - 1) * 6];
+            int size = TileSize;
+            int[] indices = new int[size * size * 6];
             int c = 0;
-            for (int y = 0; y < this.Height - 1; y++)
+            for (int y = 0; y < size; y++)
             {
-                for (int x = 0; x < this.Width - 1; x++)
+                for (int x = 0; x < size; x++)
                 {
-                    int lowerLeft = x + y * Width;
-                    int lowerRight = (x + 1) + y * Width;
-                    int topLeft = x + (y + 1) * Width;
-                    int topRight = (x + 1) + (y + 1) * Width;
+                    int topLeft = x + y * (size+1);
+                    int topRight = (x + 1) + y * (size + 1);
+                    int lowerLeft = x + (y + 1) * (size + 1);
+                    int lowerRight = (x + 1) + (y + 1) * (size + 1);
 
                     indices[c++] = topLeft;
                     indices[c++] = lowerRight;
@@ -168,11 +206,18 @@ namespace Canyon.Environment
             rs.CullMode = CullMode.None;
             rs.FillMode = FillMode.WireFrame;
             GraphicsDevice.RasterizerState = rs;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            GraphicsDevice.SetVertexBuffer(this.buffer);
             GraphicsDevice.Indices = index;
-            GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, vertices.Length, 0, vertices.Length * 2);
 
+            foreach (TerrainTile tt in this.tiles)
+            {
+                if (!frustum.Intersects(tt.BoundingBox))
+                    continue;
+                GraphicsDevice.SetVertexBuffer(tt.Buffer);
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, tt.Buffer.VertexCount, 0, index.IndexCount / 3 );
+            }
+            
             base.Draw(gameTime);
         }
     }

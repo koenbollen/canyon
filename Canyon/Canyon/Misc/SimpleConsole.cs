@@ -194,10 +194,13 @@ namespace Canyon.Misc
             this.effect.DiffuseColor = this.Settings.Background.ToVector3();
             this.effect.Alpha = this.Settings.Alpha;
 
+            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+            GraphicsDevice.BlendState = BlendState.AlphaBlend;
+
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                Game.GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.TriangleList, vertices, 0, 2);
+                GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.TriangleList, vertices, 0, 2);
             }
             #endregion
 
@@ -251,8 +254,14 @@ namespace Canyon.Misc
         public void Trace(string line)
         {
 #if TRACE
-            this.lines.Add( "] trace: " + line);
+            this.lines.Add( "trace: " + line);
 #endif // TRACE
+        }
+        public void Debug(string line)
+        {
+#if DEBUG
+            this.lines.Add("debug: " + line);
+#endif // DEBUG
         }
 
         private List<string> BuildLines(float width_bound, string text)
