@@ -3,7 +3,7 @@ Features, components for this game:
 Screens
 SimpleConsole
 Camera system -------- Free, follow, firstperson (use excludelist)
-Terrain ------ Continues loading?
+Terrain ------ Tiled, Continues loading?
 Physics? ----- Jitter? or simple custom.
 Ship/Player
 Input ----- Manager, support multple inputdevices (controller/keyboard)

@@ -16,7 +16,7 @@ namespace Canyon.Misc
         public float Alpha = 0.8f;
         public int LineCount = 10;
         public float Padding = 4;
-        public string FontAsset = "console";
+        public string FontAsset = "Fonts/console";
     }
 
     public class SimpleConsole : DrawableGameComponent
