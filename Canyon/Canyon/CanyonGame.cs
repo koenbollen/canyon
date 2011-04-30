@@ -28,6 +28,7 @@ namespace Canyon
             Content.RootDirectory = "Content";
 
             // Window and framerate settings:
+            graphics.PreferMultiSampling = true;
 #if !DEBUG
             this.graphics.IsFullScreen = true;
             this.graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;

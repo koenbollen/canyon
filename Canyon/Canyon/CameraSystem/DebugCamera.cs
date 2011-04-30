@@ -105,8 +105,11 @@ namespace Canyon.CameraSystem
             float dx = mouseState.X - center.X;
             float dy = mouseState.Y - center.Y;
 
-            this.HorizontalRotation += -dx * dt;
-            this.VerticalRotation += -dy * dt;
+            float screenFactorX = (500.0f * Game.GraphicsDevice.Viewport.AspectRatio) / Game.GraphicsDevice.Viewport.Width;
+            float screenFactorY = 500.0f / Game.GraphicsDevice.Viewport.Height;
+
+            this.HorizontalRotation += -dx * dt * screenFactorX;
+            this.VerticalRotation += -dy * dt * screenFactorY;
 
             if (kbs.IsKeyDown(Keys.W))
                 this.Position += this.Forward * MoveFactor * dt;

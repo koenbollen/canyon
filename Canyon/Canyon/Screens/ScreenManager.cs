@@ -55,10 +55,11 @@ namespace Canyon.Screens
         /// </summary>
         public override void Initialize()
         {
+            base.Initialize();
+            CanyonGame.Console.Trace("ScreenManager initialized.");
             foreach (Screen s in this.screens)
                 s.Initialize();
             this.Initialized = true;
-            base.Initialize();
         }
 
         /// <summary>

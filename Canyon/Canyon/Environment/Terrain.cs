@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Canyon.Misc;
 
 
 namespace Canyon.Environment
@@ -12,16 +13,32 @@ namespace Canyon.Environment
         /// <summary>
         /// The Vertex information specific for this terrain.
         /// </summary>
-        struct VertexTerrain : IVertexType
+        private struct VertexTerrain : IVertexType
         {
             public Vector3 Position;
+            public Vector3 Normal;
+            public Vector3 Color;
 
             public static readonly VertexDeclaration VertexDeclaration = new VertexDeclaration
             (
-                new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0)
+                new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
+                new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
+                new VertexElement(24, VertexElementFormat.Vector3, VertexElementUsage.Color, 0)
             );
 
             VertexDeclaration IVertexType.VertexDeclaration { get { return VertexDeclaration; } }
+        }
+
+        private struct TerrainTile
+        {
+            public VertexBuffer Buffer;
+            public BoundingBox BoundingBox;
+
+            public TerrainTile(VertexBuffer buffer, BoundingBox boundingBox)
+            {
+                this.Buffer = buffer;
+                this.BoundingBox = boundingBox;
+            }
         }
 
         public int TileSize { get; private set; }
@@ -42,6 +59,7 @@ namespace Canyon.Environment
         private TerrainTile[] tiles;
 
         private BoundingFrustum frustum;
+        private int[] indices;
 
         public Terrain(Game game, string heightmap)
             : base(game)
@@ -73,8 +91,8 @@ namespace Canyon.Environment
             CanyonGame.Console.Debug("Loading heightmap of " + this.heightmap.Width + "x" + this.heightmap.Height + " (TileSize is " + TileSize + ").");
 
             this.LoadData(); // Width and Height are available from here on out.
-            this.LoadVertices();
             this.LoadIndices();
+            this.LoadVertices();
 
             base.LoadContent();
         }
@@ -105,24 +123,52 @@ namespace Canyon.Environment
         }
 
         /// <summary>
+        /// Create and IndexBuffer with the indices of one tile.
+        /// </summary>
+        private void LoadIndices()
+        {
+            int size = TileSize;
+            indices = new int[size * size * 6];
+            int c = 0;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    int lowerLeft = x + y * (size+1);
+                    int lowerRight = (x + 1) + y * (size + 1);
+                    int topLeft = x + (y + 1) * (size + 1);
+                    int topRight = (x + 1) + (y + 1) * (size + 1);
+
+                    indices[c++] = topLeft;
+                    indices[c++] = lowerRight;
+                    indices[c++] = lowerLeft;
+
+                    indices[c++] = topLeft;
+                    indices[c++] = topRight;
+                    indices[c++] = lowerRight;
+                }
+            }
+
+            index = new IndexBuffer(GraphicsDevice, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.None);
+            index.SetData(indices);
+        }
+
+        /// <summary>
         /// Construct the vertices and the vertexbuffer.
         /// </summary>
         private void LoadVertices()
         {
-
             TileSize = Math.Min(Math.Min(this.Width, this.Height), TileSize);
 
-            int widthInTiles = (int)Math.Ceiling((this.Width-1) / (double)(TileSize));
-            int heightInTiles = (int)Math.Ceiling((this.Height-1) / (double)(TileSize));
+            int widthInTiles = (int)Math.Ceiling((this.Width - 1) / (double)(TileSize));
+            int heightInTiles = (int)Math.Ceiling((this.Height - 1) / (double)(TileSize));
 
             this.tiles = new TerrainTile[widthInTiles * heightInTiles];
-
+            Vector3 color = new Vector3(0xed/255.0f, 0xaa/255.0f, 0x09/255.0f);
             for (int ty = 0; ty < heightInTiles; ty++)
             {
                 for (int tx = 0; tx < widthInTiles; tx++)
                 {
-                    Vector2 position = new Vector2(tx, ty);
-
                     int width = TileSize + 1;
                     int height = TileSize + 1;
 
@@ -138,46 +184,47 @@ namespace Canyon.Environment
                             int ry = (ty * TileSize + y);
                             int ri = rx + ry * this.Width;
                             int i = x + y * width;
-                            vertices[i].Position = new Vector3(rx, data[Math.Min(rx,this.Width-1), Math.Min(ry,this.Height-1)], ry);
+                            vertices[i].Position = new Vector3(rx, data[Math.Min(rx, this.Width - 1), Math.Min(ry, this.Height - 1)], ry);
                             bbmax = Vector3.Max(bbmax, vertices[i].Position);
                             bbmin = Vector3.Min(bbmin, vertices[i].Position);
+
+                            float weight = vertices[i].Position.Y;
+                            weight -= minheight;
+                            weight /= (maxheight - minheight);
+                            weight *= weight;
+                            vertices[i].Color = Vector3.Lerp(color, Vector3.One, weight); 
                         }
                     }
+
+                    this.SetupNormals(vertices);
 
                     VertexBuffer buffer = new VertexBuffer(GraphicsDevice, typeof(VertexTerrain), vertices.Length, BufferUsage.None);
                     buffer.SetData(vertices);
 
-                    tiles[ty * widthInTiles + tx] = new TerrainTile(position, buffer, new BoundingBox(bbmin, bbmax));
+                    tiles[ty * widthInTiles + tx] = new TerrainTile(buffer, new BoundingBox(bbmin, bbmax));
                 }
             }
         }
 
-        private void LoadIndices()
+        private void SetupNormals(VertexTerrain[] vertices)
         {
-            int size = TileSize;
-            int[] indices = new int[size * size * 6];
-            int c = 0;
-            for (int y = 0; y < size; y++)
+            for (int i = 0; i < indices.Length / 3; i++)
             {
-                for (int x = 0; x < size; x++)
-                {
-                    int topLeft = x + y * (size+1);
-                    int topRight = (x + 1) + y * (size + 1);
-                    int lowerLeft = x + (y + 1) * (size + 1);
-                    int lowerRight = (x + 1) + (y + 1) * (size + 1);
+                int index0 = indices[i * 3];
+                int index1 = indices[i * 3 + 1];
+                int index2 = indices[i * 3 + 2];
 
-                    indices[c++] = topLeft;
-                    indices[c++] = lowerRight;
-                    indices[c++] = lowerLeft;
+                Vector3 side0 = vertices[index0].Position - vertices[index2].Position;
+                Vector3 side1 = vertices[index0].Position - vertices[index1].Position;
+                Vector3 normal = Vector3.Cross(side1, side0);
 
-                    indices[c++] = topLeft;
-                    indices[c++] = topRight;
-                    indices[c++] = lowerRight;
-                }
+                vertices[index0].Normal += normal;
+                vertices[index1].Normal += normal;
+                vertices[index2].Normal += normal;
             }
 
-            index = new IndexBuffer(GraphicsDevice, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.None);
-            index.SetData(indices);
+            for (int i = 0; i < vertices.Length; i++)
+                vertices[i].Normal = vertices[i].Normal.SafeNormalize();
         }
 
         protected override void UnloadContent()
@@ -200,12 +247,16 @@ namespace Canyon.Environment
             effect.Parameters["View"].SetValue(CanyonGame.Camera.View);
             effect.Parameters["Projection"].SetValue(CanyonGame.Camera.Projection);
 
+
+            effect.Parameters["LightDirection"].SetValue(new Vector3(-0.5f, -1, -0.5f));
+            effect.Parameters["Ambient"].SetValue(0.2f);
+
             effect.CurrentTechnique.Passes[0].Apply();
 
             RasterizerState rs = new RasterizerState();
             rs.CullMode = CullMode.None;
             rs.FillMode = FillMode.WireFrame;
-            GraphicsDevice.RasterizerState = rs;
+            GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             GraphicsDevice.Indices = index;
