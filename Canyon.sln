@@ -5,6 +5,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Canyon", "Canyon\Canyon\Can
 EndProject
 Project("{96E2B04D-8817-42C6-938A-82C39BA4D311}") = "CanyonContent", "Canyon\CanyonContent\CanyonContent.contentproj", "{CD02BFA2-2F99-4F02-9C6E-A34FF4097C73}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8F299FC7-AA96-48EC-A78B-80F00DBF6BAD}"
+	ProjectSection(SolutionItems) = preProject
+		readme.txt = readme.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
