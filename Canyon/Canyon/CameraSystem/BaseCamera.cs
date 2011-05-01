@@ -8,7 +8,8 @@ namespace Canyon.CameraSystem
 
         public Matrix Projection { get; protected set; }
 
-        public event OnCameraChanged CameraChanged;
+        public event OnViewChanged ViewChanged;
+        public event OnProjectionChanged ProjectionChanged;
 
         /// <summary>
         /// Initialize the View and Projection matrices to Matrix.Identity.
@@ -27,8 +28,10 @@ namespace Canyon.CameraSystem
         {
             this.View = view;
             this.Projection = projection;
-            if (CameraChanged != null)
-                CameraChanged(view, projection);
+            if (ViewChanged != null)
+                ViewChanged(this);
+            if (ProjectionChanged != null)
+                ProjectionChanged(this);
         }
 
         /// <summary>
@@ -39,8 +42,13 @@ namespace Canyon.CameraSystem
         /// <param name="aspectRatio">The aspect ratio of the render result (commenly GraphicsDevice.Viewport.AspectRatio).</param>
         /// <param name="nearPlaneDistance">Near plane of this view.</param>
         /// <param name="farPlaneDistance">Far plane of this view.</param>
-        public BaseCamera(Vector3 position, Vector3 target, Vector3 up, float aspectRatio, float nearPlaneDistance, float farPlaneDistance)
-            :this(Matrix.CreateLookAt(position, target, up), Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, nearPlaneDistance, farPlaneDistance))
+        public BaseCamera(Vector3 position, Vector3 target, Vector3 up)
+            :this(
+                Matrix.CreateLookAt(position, target, up), 
+                Matrix.CreatePerspectiveFieldOfView(
+                    MathHelper.PiOver4, CanyonGame.AspectRatio,
+                    CanyonGame.NearPlane, CanyonGame.FarPlane)
+            )
         {
         }
     }

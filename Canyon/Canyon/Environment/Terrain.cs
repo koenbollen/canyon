@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Canyon.Misc;
 using System.Collections.Generic;
+using Canyon.CameraSystem;
 
 
 namespace Canyon.Environment
@@ -76,15 +77,28 @@ namespace Canyon.Environment
         public override void Initialize()
         {
             TileSize = 32;
-            CanyonGame.Camera.CameraChanged += new CameraSystem.OnCameraChanged(CameraChanged);
+            this.frustum = new BoundingFrustum(CanyonGame.Camera.View * CanyonGame.Camera.Projection);
+            CanyonGame.Instance.CameraChanged += new OnCameraChanged(CameraChanged);
+            CanyonGame.Camera.ViewChanged += new OnViewChanged(ViewOrProjectionChanged);
+            CanyonGame.Camera.ProjectionChanged += new OnProjectionChanged(ViewOrProjectionChanged);
+            ViewOrProjectionChanged(CanyonGame.Camera);
             base.Initialize();
             CanyonGame.Console.Trace("Terrain initialized.");
         }
 
-        void CameraChanged(Matrix view, Matrix projection)
+        void CameraChanged(ICamera prev, ICamera current)
         {
-            if( !Keyboard.GetState().IsKeyDown(Keys.LeftAlt) )
-                this.frustum = new BoundingFrustum(view * projection);
+            prev.ViewChanged -= new OnViewChanged(ViewOrProjectionChanged);
+            prev.ProjectionChanged -= new OnProjectionChanged(ViewOrProjectionChanged);
+            current.ViewChanged += new OnViewChanged(ViewOrProjectionChanged);
+            current.ProjectionChanged += new OnProjectionChanged(ViewOrProjectionChanged);
+            ViewOrProjectionChanged(current);
+        }
+
+        void ViewOrProjectionChanged(ICamera camera)
+        {
+            if (!CanyonGame.Input.IsKeyDown(Keys.LeftAlt))
+                this.frustum = new BoundingFrustum(camera.View * camera.Projection);
         }
 
         protected override void LoadContent()
@@ -331,7 +345,7 @@ namespace Canyon.Environment
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
 #if DEBUG
-            if (Keyboard.GetState().IsKeyDown(Keys.L))
+            if (CanyonGame.Input.IsKeyDown(Keys.L))
             {
                 RasterizerState rs = new RasterizerState();
                 rs.CullMode = CullMode.None;

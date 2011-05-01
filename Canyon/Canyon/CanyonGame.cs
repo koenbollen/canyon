@@ -10,13 +10,22 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Canyon
 {
+    public delegate void OnCameraChanged( ICamera prev, ICamera current );
     public class CanyonGame : Microsoft.Xna.Framework.Game
     {
         public static CanyonGame Instance { get; private set; }
         public static SimpleConsole Console { get; private set; }
         public static InputManager Input { get; private set; }
         public static ScreenManager Screens { get; private set; }
-        public static ICamera Camera { get; set; }
+        public static ICamera Camera { get; private set; }
+
+        public event OnCameraChanged CameraChanged;
+
+        public static float AspectRatio = 4.0f / 3.0f;
+        public static float NearPlane = 0.1f;
+        public static float FarPlane = 1000.0f;
+
+        public bool DoExit;
 
         private GraphicsDeviceManager graphics;
 
@@ -48,6 +57,8 @@ namespace Canyon
 
         protected override void Initialize()
         {
+            CanyonGame.AspectRatio = GraphicsDevice.Viewport.AspectRatio;
+
             // Start with the console, always the most important thing in a game:
             this.Components.Add(CanyonGame.Console = new SimpleConsole(this));
             this.Components.Add(CanyonGame.Input = new InputManager(this));
@@ -62,9 +73,25 @@ namespace Canyon
             this.Components.Add(CanyonGame.Screens = new ScreenManager(this, start));
 
             // Create a simple camera:
-            DebugCamera camera = new DebugCamera(this, new Vector3(-20, 60, -20), -MathHelper.Pi/4*3, -MathHelper.Pi/8, GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000.0f);
+#if DEBUG
+            DebugCamera camera = new DebugCamera(this, new Vector3(-20, 60, -20), -MathHelper.Pi/4*3, -MathHelper.Pi/8);
             this.Components.Add(camera);
             CanyonGame.Camera = camera;
+
+            ICamera last = camera;
+            CanyonGame.Console.Commands["camera_debug"] = delegate( Game game, string[] argv, GameTime gameTime )
+            {
+                if (CanyonGame.Camera != camera)
+                {
+                    last = CanyonGame.Camera;
+                    CanyonGame.Instance.ChangeCamera(camera);
+                }else
+                    CanyonGame.Camera = last;
+            };
+#else // DEBUG
+            CanyonGame.Camera = new FallbackCamera();
+#endif // DEBUG
+
 
             base.Initialize();
             GC.Collect(); // TODO: Move to LoadScreen
@@ -76,7 +103,7 @@ namespace Canyon
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+            if (DoExit || GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
             if (gameTime.TotalGameTime.TotalMinutes > 2)
@@ -90,6 +117,14 @@ namespace Canyon
             GraphicsDevice.Clear(Color.DarkSlateGray);
 
             base.Draw(gameTime);
+        }
+
+        public void ChangeCamera(ICamera camera )
+        {
+            ICamera old = CanyonGame.Camera;
+            CanyonGame.Camera = camera;
+            if (CameraChanged != null)
+                CameraChanged(old, CanyonGame.Camera);
         }
     }
 }

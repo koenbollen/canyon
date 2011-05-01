@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Canyon.CameraSystem;
 
 
 namespace Canyon.Entities
@@ -10,8 +11,23 @@ namespace Canyon.Entities
         public Matrix World { get; protected set; }
 
         private float yaw;
+        protected float Yaw
+        {
+            get { return yaw; }
+            set { yaw = value % MathHelper.TwoPi; orientationChanged = true; }
+        }
         private float pitch;
+        protected float Pitch
+        {
+            get { return pitch; }
+            set { pitch = value % MathHelper.TwoPi; orientationChanged = true; }
+        }
         private float roll;
+        protected float Roll
+        {
+            get { return roll; }
+            set { roll = value % MathHelper.TwoPi; orientationChanged = true; }
+        }
 
         private bool orientationChanged;
         public Quaternion Orientation { get; protected set; }
@@ -22,6 +38,8 @@ namespace Canyon.Entities
 
         private Model model;
 
+        private IFollowCamera followCamera;
+
         public Player(Game game, Vector3 position)
             : base(game)
         {
@@ -30,6 +48,12 @@ namespace Canyon.Entities
 
         public override void Initialize()
         {
+            yaw = -MathHelper.Pi / 4 * 3;
+
+            followCamera = new SimpleFollowCamera(25, -MathHelper.Pi/8);
+            CanyonGame.Instance.ChangeCamera(followCamera);
+
+            this.orientationChanged = true;
             base.Initialize();
         }
 
@@ -42,19 +66,24 @@ namespace Canyon.Entities
 
         public override void Update(GameTime gameTime)
         {
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             World = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(this.Position);
+
+            Position += this.Forward * 10 * dt;
+
+            if (gameTime.TotalGameTime.TotalSeconds > 2)
+                Yaw += MathHelper.Pi / 10 * dt;
+            if (gameTime.TotalGameTime.TotalSeconds > 1.9f && gameTime.TotalGameTime.TotalSeconds < 3f)
+                Roll += MathHelper.Pi / 8 * dt;
             
-            // Demo rotation:
-            this.yaw += MathHelper.Pi / 8 * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            this.orientationChanged = true;
-
-
-
             if (this.orientationChanged)
             {
                 this.Orientation = Quaternion.CreateFromYawPitchRoll(this.yaw, this.pitch, this.roll);
                 this.orientationChanged = false;
             }
+
+            followCamera.Target = this.Position;
+            followCamera.Direction = this.Forward;
 
             base.Update(gameTime);
         }

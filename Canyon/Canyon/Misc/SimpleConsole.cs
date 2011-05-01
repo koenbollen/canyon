@@ -60,7 +60,7 @@ namespace Canyon.Misc
         {
             this.Commands["quit"] = delegate(Game game, string[] argv, GameTime gameTime)
             {
-                game.Exit();
+                CanyonGame.Instance.DoExit = true;
             };
             this.Commands["echo"] = delegate(Game game, string[] argv, GameTime gameTime)
             {

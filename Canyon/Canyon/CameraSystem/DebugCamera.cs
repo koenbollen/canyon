@@ -19,9 +19,9 @@ namespace Canyon.CameraSystem
                 if (viewChanged)
                 {
                     view = Matrix.CreateLookAt(this.Position, this.Position + this.Forward, this.Up);
-                    if (CameraChanged != null)
-                        CameraChanged(view, Projection);
-                    viewChanged = true;
+                    viewChanged = false;
+                    if (ViewChanged != null)
+                        ViewChanged(this);
                 }
                 return view;
             }
@@ -29,7 +29,8 @@ namespace Canyon.CameraSystem
 
         public Matrix Projection { get; protected set; }
 
-        public event OnCameraChanged CameraChanged;
+        public event OnViewChanged ViewChanged;
+        public event OnProjectionChanged ProjectionChanged;
 
         private Vector3 position;
         public Vector3 Position { get { return position; } set { position = value; viewChanged = true; } }
@@ -71,14 +72,17 @@ namespace Canyon.CameraSystem
 
         protected InputManager Input;
 
-        public DebugCamera(Game game, Vector3 position, float horizontalRotation, float verticalRotation, float aspectRatio, float nearPlane, float farPlane )
+        public DebugCamera(Game game, Vector3 position, float horizontalRotation, float verticalRotation )
             :base(game)
         {
             Position = position;
             HorizontalRotation = horizontalRotation;
             VerticalRotation = verticalRotation;
-            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, nearPlane, farPlane);
-
+            Projection = Matrix.CreatePerspectiveFieldOfView(
+                MathHelper.PiOver4, CanyonGame.AspectRatio,
+                CanyonGame.NearPlane, CanyonGame.FarPlane);
+            if (ProjectionChanged != null)
+                ProjectionChanged(this);
             speed = 10;
         }
 
@@ -102,6 +106,8 @@ namespace Canyon.CameraSystem
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            Input.CenterMouse = CanyonGame.Camera == this;
 
             this.HorizontalRotation += -Input.Look.X * dt;
             this.VerticalRotation += -Input.Look.Y * dt;
