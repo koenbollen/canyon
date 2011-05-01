@@ -14,6 +14,7 @@ namespace Canyon
     {
         public static CanyonGame Instance { get; private set; }
         public static SimpleConsole Console { get; private set; }
+        public static InputManager Input { get; private set; }
         public static ScreenManager Screens { get; private set; }
         public static ICamera Camera { get; set; }
 
@@ -49,6 +50,7 @@ namespace Canyon
         {
             // Start with the console, always the most important thing in a game:
             this.Components.Add(CanyonGame.Console = new SimpleConsole(this));
+            this.Components.Add(CanyonGame.Input = new InputManager(this));
 
 #if DEBUG
             this.Components.Add(new FrameCounter(this));

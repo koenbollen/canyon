@@ -67,29 +67,34 @@ namespace Canyon.CameraSystem
         public Vector3 Left { get { return Vector3.Transform(Vector3.Left, this.Orientation); } }
         public Vector3 Up { get { return Vector3.Transform(Vector3.Up, this.Orientation); } }
 
-        public float MoveFactor { get; set; }
+        private float speed { get; set; }
+
+        protected InputManager Input;
 
         public DebugCamera(Game game, Vector3 position, float horizontalRotation, float verticalRotation, float aspectRatio, float nearPlane, float farPlane )
             :base(game)
         {
-            MoveFactor = 10;
             Position = position;
             HorizontalRotation = horizontalRotation;
             VerticalRotation = verticalRotation;
             Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, nearPlane, farPlane);
+
+            speed = 10;
         }
 
         public override void Initialize()
         {
+            Input = CanyonGame.Input;
+            Input.CenterMouse = true;
+
             orientationChanged = true;
             viewChanged = true;
 
-            Mouse.SetPosition(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2);
-
-            CanyonGame.Console.Commands["camera"] = delegate(Microsoft.Xna.Framework.Game game, string[] argv, GameTime gameTime)
+            CanyonGame.Console.Commands["camera_info"] = delegate(Microsoft.Xna.Framework.Game game, string[] argv, GameTime gameTime)
             {
                 CanyonGame.Console.Trace("DebugCamera: " + this.position + " (h: " + this.HorizontalRotation + " v: " + this.VerticalRotation + ")");
             };
+
 
             base.Initialize();
         }
@@ -97,38 +102,21 @@ namespace Canyon.CameraSystem
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            Vector2 center = new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2);
 
-            MouseState mouseState = Mouse.GetState();
-            KeyboardState kbs = Keyboard.GetState();
+            this.HorizontalRotation += -Input.Look.X * dt;
+            this.VerticalRotation += -Input.Look.Y * dt;
 
-            float dx = mouseState.X - center.X;
-            float dy = mouseState.Y - center.Y;
+            this.Position += this.Forward * -Input.Movement.Z * speed * dt;
+            this.Position += this.Left * -Input.Movement.X * speed * dt;
 
-            float screenFactorX = (500.0f * Game.GraphicsDevice.Viewport.AspectRatio) / Game.GraphicsDevice.Viewport.Width;
-            float screenFactorY = 500.0f / Game.GraphicsDevice.Viewport.Height;
+            if (Input.IsKeyDown(Keys.LeftShift))
+                this.Position += Vector3.Up * Input.Movement.Y * speed * dt;
+            else
+                this.Position += this.Up * Input.Movement.Y * speed * dt;
 
-            this.HorizontalRotation += -dx * dt * screenFactorX;
-            this.VerticalRotation += -dy * dt * screenFactorY;
+            if (Input.ScrollWheelValue != 0)
+                speed = Input.ScrollWheelValue / 10;
 
-            if (kbs.IsKeyDown(Keys.W))
-                this.Position += this.Forward * MoveFactor * dt;
-            if (kbs.IsKeyDown(Keys.S))
-                this.Position += -this.Forward * MoveFactor * dt;
-            if (kbs.IsKeyDown(Keys.A))
-                this.Position += this.Left * MoveFactor * dt;
-            if (kbs.IsKeyDown(Keys.D))
-                this.Position += -this.Left * MoveFactor * dt;
-
-            if (kbs.IsKeyDown(Keys.Space) && kbs.IsKeyDown(Keys.LeftShift))
-                this.Position += Vector3.Up * MoveFactor * dt;
-            else if (kbs.IsKeyDown(Keys.Space))
-                this.Position += this.Up * MoveFactor * dt;
-
-            if (mouseState.ScrollWheelValue != 0)
-                MoveFactor = mouseState.ScrollWheelValue / 10;
-
-            Mouse.SetPosition((int)center.X, (int)center.Y);
             base.Update(gameTime);
         }
 

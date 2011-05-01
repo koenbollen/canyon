@@ -41,12 +41,13 @@ namespace Canyon.Screens
             get { return this.Peek(); }
         }
 
+        private Screen startScreen;
+
         public ScreenManager(Game game, Screen start)
             : base(game)
         {
             this.screens = new Stack<Screen>();
-            if( start != null )
-                this.Push(start);
+            startScreen = start;
             this.Initialized = false;
         }
 
@@ -57,6 +58,8 @@ namespace Canyon.Screens
         {
             base.Initialize();
             CanyonGame.Console.Trace("ScreenManager initialized.");
+            if (startScreen != null)
+                this.Push(startScreen);
             foreach (Screen s in this.screens)
                 s.Initialize();
             this.Initialized = true;
