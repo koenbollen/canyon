@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Canyon.Misc;
+using System.Collections.Generic;
 
 
 namespace Canyon.Environment
@@ -31,11 +33,15 @@ namespace Canyon.Environment
 
         private struct TerrainTile
         {
+            public Vector2 Position;
+            public VertexTerrain[] Vertices;
             public VertexBuffer Buffer;
             public BoundingBox BoundingBox;
 
-            public TerrainTile(VertexBuffer buffer, BoundingBox boundingBox)
+            public TerrainTile(Vector2 position, VertexTerrain[] vertices, VertexBuffer buffer, BoundingBox boundingBox)
             {
+                this.Vertices = vertices;
+                this.Position = position;
                 this.Buffer = buffer;
                 this.BoundingBox = boundingBox;
             }
@@ -93,8 +99,79 @@ namespace Canyon.Environment
             this.LoadData(); // Width and Height are available from here on out.
             this.LoadIndices();
             this.LoadVertices();
+            this.SeamNormals();
+
+            // Copy vertices in to the buffers:
+            for (int i = 0; i < this.tiles.Length; i++)
+                this.tiles[i].Buffer.SetData(this.tiles[i].Vertices);
+
+            /*/ Draw normals of tile 1 and 2:
+            foreach (TerrainTile tt in this.tiles.Skip(1).Take(2))
+                foreach (VertexTerrain vt in tt.Vertices)
+                    vt.Normal.Draw(vt.Position, Color.LightCyan);
+            //*/
 
             base.LoadContent();
+        }
+
+        /// <summary>
+        /// The vertices on the edges of each tile have their own 
+        /// normals, so neighboring tiles need to seam the normals 
+        /// on the edges.
+        /// </summary>
+        private void SeamNormals()
+        {
+            // Not really efficient but logical and stable, and this is part of loading a level:
+            Dictionary<TerrainTile, List<TerrainTile>> bucket = new Dictionary<TerrainTile, List<TerrainTile>>();
+            for (int i = 0; i < this.tiles.Length; i++)
+            {
+                TerrainTile tt = this.tiles[i];
+                bucket[tt] = new List<TerrainTile>();
+                for (int j = 0; j < this.tiles.Length; j++)
+                {
+                    if (i == j)
+                        continue;
+                    TerrainTile n = this.tiles[j];
+                    int dx = (int)Math.Abs(tt.Position.X - n.Position.X);
+                    int dy = (int)Math.Abs(tt.Position.Y - n.Position.Y);
+                    if ((dx == 1 && dy == 0) || (dx == 0 && dy == 1))
+                        bucket[tt].Add(n);
+                }
+            }
+            for (int i = 0; i < this.tiles.Length; i++)
+            {
+                TerrainTile t = this.tiles[i];
+                foreach (TerrainTile n in bucket[t])
+                {
+                    for (int j = 0; j < TileSize + 1; j++)
+                    {
+                        int one = 0, two = 0;
+                        if (t.Position.X < n.Position.X) // n is right of t.
+                        {
+                            one = j * (TileSize + 1) + (TileSize);
+                            two = j * (TileSize + 1);
+                        }
+                        else if (t.Position.X > n.Position.X) // n is left of t.
+                        {
+                            one = j * (TileSize + 1);
+                            two = j * (TileSize + 1) + (TileSize);
+                        }
+                        else if (t.Position.Y > n.Position.Y) // n in above t.
+                        {
+                            one = j;
+                            two = j + (TileSize + 1) * (TileSize);
+                        }
+                        else if (t.Position.Y < n.Position.Y) // n in below t.
+                        {
+                            one = j + (TileSize + 1) * (TileSize);
+                            two = j;
+                        }
+                        Vector3 normal = (t.Vertices[one].Normal + n.Vertices[two].Normal).SafeNormalize();
+                        t.Vertices[one].Normal = normal;
+                        n.Vertices[two].Normal = normal;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -199,13 +276,16 @@ namespace Canyon.Environment
                     this.SetupNormals(vertices);
 
                     VertexBuffer buffer = new VertexBuffer(GraphicsDevice, typeof(VertexTerrain), vertices.Length, BufferUsage.None);
-                    buffer.SetData(vertices);
-
-                    tiles[ty * widthInTiles + tx] = new TerrainTile(buffer, new BoundingBox(bbmin, bbmax));
+                    tiles[ty * widthInTiles + tx] = new TerrainTile(new Vector2(tx, ty), vertices, buffer, new BoundingBox(bbmin, bbmax));
                 }
             }
         }
 
+        /// <summary>
+        /// Calculate the normals of each vertices by getting the
+        /// two sides of each vertex' triangle and crossing then.
+        /// </summary>
+        /// <param name="vertices">The vertices on which to calculate normals.</param>
         private void SetupNormals(VertexTerrain[] vertices)
         {
             for (int i = 0; i < indices.Length / 3; i++)
@@ -233,11 +313,6 @@ namespace Canyon.Environment
             this.content.Unload();
             base.UnloadContent();
         }
-        
-        public override void Update(GameTime gameTime)
-        {
-            base.Update(gameTime);
-        }
 
         public override void Draw(GameTime gameTime)
         {
@@ -253,14 +328,21 @@ namespace Canyon.Environment
 
             effect.CurrentTechnique.Passes[0].Apply();
 
-            RasterizerState rs = new RasterizerState();
-            rs.CullMode = CullMode.None;
-            rs.FillMode = FillMode.WireFrame;
-            GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+#if DEBUG
+            if (Keyboard.GetState().IsKeyDown(Keys.L))
+            {
+                RasterizerState rs = new RasterizerState();
+                rs.CullMode = CullMode.None;
+                rs.FillMode = FillMode.WireFrame;
+                GraphicsDevice.RasterizerState = rs;
+            }
+#endif // DEBUG
 
             GraphicsDevice.Indices = index;
 
+            // Draw all tiles that are visible:
             foreach (TerrainTile tt in this.tiles)
             {
                 if (!frustum.Intersects(tt.BoundingBox))

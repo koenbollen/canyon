@@ -21,6 +21,7 @@ Continues terrain loading.
 Water? :P
 Caves?
 MovementBlur
+Dynamic Fog Disstance?
 
 
 == The Terrain ==

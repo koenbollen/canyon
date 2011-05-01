@@ -21,7 +21,7 @@ namespace Canyon
 
         public CanyonGame()
         {
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture; // why the hell isn't this default in .net applications?!1
 
             CanyonGame.Instance = this;
             graphics = new GraphicsDeviceManager(this);
