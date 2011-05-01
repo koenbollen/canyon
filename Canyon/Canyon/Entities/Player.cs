@@ -9,6 +9,17 @@ namespace Canyon.Entities
         public Vector3 Position { get; protected set; }
         public Matrix World { get; protected set; }
 
+        private float yaw;
+        private float pitch;
+        private float roll;
+
+        private bool orientationChanged;
+        public Quaternion Orientation { get; protected set; }
+        
+        public Vector3 Forward { get { return Vector3.Transform(Vector3.Forward, this.Orientation); } }
+        public Vector3 Left { get { return Vector3.Transform(Vector3.Left, this.Orientation); } }
+        public Vector3 Up { get { return Vector3.Transform(Vector3.Up, this.Orientation); } }
+
         private Model model;
 
         public Player(Game game, Vector3 position)
@@ -31,7 +42,19 @@ namespace Canyon.Entities
 
         public override void Update(GameTime gameTime)
         {
-            World = Matrix.CreateTranslation(this.Position);
+            World = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(this.Position);
+            
+            // Demo rotation:
+            this.yaw += MathHelper.Pi / 8 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            this.orientationChanged = true;
+
+
+
+            if (this.orientationChanged)
+            {
+                this.Orientation = Quaternion.CreateFromYawPitchRoll(this.yaw, this.pitch, this.roll);
+                this.orientationChanged = false;
+            }
 
             base.Update(gameTime);
         }
@@ -52,6 +75,8 @@ namespace Canyon.Entities
                     effect.View = CanyonGame.Camera.View;
                     effect.Projection = CanyonGame.Camera.Projection;
                     effect.EnableDefaultLighting();
+                    effect.PreferPerPixelLighting = true;
+                    effect.DiffuseColor = Color.DarkMagenta.ToVector3();
                 }
 
                 mesh.Draw();

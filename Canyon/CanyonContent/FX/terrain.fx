@@ -27,7 +27,7 @@ VertexShaderOutput JustWhiteVertexShader(VertexShaderInput input)
     float4 worldPosition = mul(input.Position, World);
     float4 viewPosition = mul(worldPosition, View);
     output.Position = mul(viewPosition, Projection);
-    output.Normal = input.Normal;
+    output.Normal = normalize(input.Normal);
     output.Color = input.Color;
 
     return output;
@@ -37,13 +37,13 @@ float4 JustWhitePixelShader(VertexShaderOutput input) : COLOR0
 {
 	float4 output = float4(input.Color,1);
 
-	float lighting = saturate(saturate(dot(input.Normal, -LightDirection)) + Ambient);
+	float lighting = saturate(dot( input.Normal, -LightDirection ) * .5 + .5) + Ambient;
 	output.rgb *= lighting;
 
     return output;
 }
 
-technique JustWhite
+technique Colored
 {
     pass Pass1
     {
@@ -51,3 +51,4 @@ technique JustWhite
         PixelShader = compile ps_2_0 JustWhitePixelShader();
     }
 }
+ 

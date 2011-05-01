@@ -316,7 +316,7 @@ namespace Canyon.Environment
 
         public override void Draw(GameTime gameTime)
         {
-            effect.CurrentTechnique = effect.Techniques["JustWhite"];
+            effect.CurrentTechnique = effect.Techniques["Colored"];
 
             effect.Parameters["World"].SetValue(Matrix.Identity);
             effect.Parameters["View"].SetValue(CanyonGame.Camera.View);

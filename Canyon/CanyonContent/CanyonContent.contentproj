@@ -68,13 +68,7 @@
       <Name>ship</Name>
       <Importer>FbxImporter</Importer>
       <Processor>ModelProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Heightmaps\flat.png">
-      <Name>flat</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
+      <ProcessorParameters_RotationX>-90</ProcessorParameters_RotationX>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -110,13 +104,6 @@
     </Compile>
     <Compile Include="Heightmaps\three.png">
       <Name>three</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Heightmaps\slim.png">
-      <Name>slim</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
