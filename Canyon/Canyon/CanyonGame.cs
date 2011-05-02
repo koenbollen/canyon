@@ -77,24 +77,37 @@ namespace Canyon
             DebugCamera camera = new DebugCamera(this, new Vector3(-20, 60, -20), -MathHelper.Pi/4*3, -MathHelper.Pi/8);
             this.Components.Add(camera);
             CanyonGame.Camera = camera;
-
-            ICamera last = camera;
-            CanyonGame.Console.Commands["camera_debug"] = delegate( Game game, string[] argv, GameTime gameTime )
-            {
-                if (CanyonGame.Camera != camera)
-                {
-                    last = CanyonGame.Camera;
-                    CanyonGame.Instance.ChangeCamera(camera);
-                }else
-                    CanyonGame.Camera = last;
-            };
 #else // DEBUG
             CanyonGame.Camera = new FallbackCamera();
 #endif // DEBUG
 
-
+            this.RegisterConsoleCommands();
             base.Initialize();
             GC.Collect(); // TODO: Move to LoadScreen
+        }
+
+        private void RegisterConsoleCommands()
+        {
+#if DEBUG
+            CanyonGame.Console.Commands["fullscreen"] = delegate(Game game, string[] argv, GameTime gameTime)
+            {
+                this.graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+                this.graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+                graphics.ToggleFullScreen();
+            };
+
+            ICamera main = CanyonGame.Camera, last = main;
+            CanyonGame.Console.Commands["camera_debug"] = delegate(Game game, string[] argv, GameTime gameTime)
+            {
+                if (CanyonGame.Camera != main)
+                {
+                    last = CanyonGame.Camera;
+                    CanyonGame.Instance.ChangeCamera(main);
+                }
+                else
+                    CanyonGame.Camera = last;
+            };
+#endif // DEBUG
         }
 
         protected override void LoadContent()
@@ -105,6 +118,13 @@ namespace Canyon
         {
             if (DoExit || GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
+
+#if DEBUG
+            if (Input.IsJustDown(Keys.OemPlus))
+                this.TargetElapsedTime += new TimeSpan(0, 0, 0, 0, 1);
+            if (Input.IsJustDown(Keys.OemMinus) && this.TargetElapsedTime > new TimeSpan(0, 0, 0, 0, 1) )
+                this.TargetElapsedTime -= new TimeSpan(0, 0, 0, 0, 1);
+#endif
 
             if (gameTime.TotalGameTime.TotalMinutes > 2)
                 this.Exit();

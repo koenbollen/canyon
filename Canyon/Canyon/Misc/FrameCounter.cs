@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 
 namespace Canyon.Misc
@@ -32,6 +33,10 @@ namespace Canyon.Misc
             font = Game.Content.Load<SpriteFont>("Fonts/default");
 
             this.position = new Vector2(10, GraphicsDevice.Viewport.Height - 10 - font.LineSpacing);
+            this.Game.GraphicsDevice.DeviceReset += delegate(object sender, EventArgs e)
+            {
+                this.position = new Vector2(10, GraphicsDevice.Viewport.Height - 10 - font.LineSpacing);
+            };
 
             base.LoadContent();
         }

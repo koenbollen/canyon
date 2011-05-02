@@ -7,31 +7,14 @@ namespace Canyon.Entities
 {
     public class Player : DrawableGameComponent, IEntity
     {
+        public const float PitchStep = MathHelper.Pi / 4;
+        public const float YawStep = MathHelper.Pi / 4;
+        public const float RollStep = MathHelper.PiOver2;
+
         public Vector3 Position { get; protected set; }
         public Matrix World { get; protected set; }
 
-        private float yaw;
-        protected float Yaw
-        {
-            get { return yaw; }
-            set { yaw = value % MathHelper.TwoPi; orientationChanged = true; }
-        }
-        private float pitch;
-        protected float Pitch
-        {
-            get { return pitch; }
-            set { pitch = value % MathHelper.TwoPi; orientationChanged = true; }
-        }
-        private float roll;
-        protected float Roll
-        {
-            get { return roll; }
-            set { roll = value % MathHelper.TwoPi; orientationChanged = true; }
-        }
-
-        private bool orientationChanged;
         public Quaternion Orientation { get; protected set; }
-        
         public Vector3 Forward { get { return Vector3.Transform(Vector3.Forward, this.Orientation); } }
         public Vector3 Left { get { return Vector3.Transform(Vector3.Left, this.Orientation); } }
         public Vector3 Up { get { return Vector3.Transform(Vector3.Up, this.Orientation); } }
@@ -40,6 +23,7 @@ namespace Canyon.Entities
 
         private IFollowCamera followCamera;
 
+        protected InputManager Input;
         public Player(Game game, Vector3 position)
             : base(game)
         {
@@ -48,12 +32,14 @@ namespace Canyon.Entities
 
         public override void Initialize()
         {
-            yaw = -MathHelper.Pi / 4 * 3;
+            Input = CanyonGame.Input;
+            Input.CenterMouse = true;
+
+            Orientation = Quaternion.Identity;
 
             followCamera = new SimpleFollowCamera(25, -MathHelper.Pi/8);
             CanyonGame.Instance.ChangeCamera(followCamera);
 
-            this.orientationChanged = true;
             base.Initialize();
         }
 
@@ -69,19 +55,11 @@ namespace Canyon.Entities
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             World = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(this.Position);
 
-            Position += this.Forward * 10 * dt;
+            this.Position += this.Forward * -Input.Movement.Z * 50 * dt; // tmp ofc.
 
-            if (gameTime.TotalGameTime.TotalSeconds > 2)
-                Yaw += MathHelper.Pi / 10 * dt;
-            if (gameTime.TotalGameTime.TotalSeconds > 1.9f && gameTime.TotalGameTime.TotalSeconds < 3f)
-                Roll += MathHelper.Pi / 8 * dt;
+            Quaternion step = Quaternion.CreateFromYawPitchRoll(-Input.Look.X * YawStep * dt, -Input.Look.Y * PitchStep * dt, -Input.Movement.X * RollStep * dt);
+            this.Orientation = this.Orientation * step;
             
-            if (this.orientationChanged)
-            {
-                this.Orientation = Quaternion.CreateFromYawPitchRoll(this.yaw, this.pitch, this.roll);
-                this.orientationChanged = false;
-            }
-
             followCamera.Target = this.Position;
             followCamera.Direction = this.Forward;
 

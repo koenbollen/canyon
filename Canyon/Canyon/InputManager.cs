@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Canyon.Misc;
 
 namespace Canyon
 {
@@ -44,24 +45,24 @@ namespace Canyon
 
         public override void Initialize()
         {
-            pkbs = Keyboard.GetState();
-            pms = Mouse.GetState();
-            pgps = GamePad.GetState(PlayerIndex.One);
+            ckbs = Keyboard.GetState();
+            cms = Mouse.GetState();
+            cgps = GamePad.GetState(PlayerIndex.One);
 
             CenterMouse = false;
 
             // Calculate center of the screen and keep it updated:
-            GraphicsDevice_DeviceResetting(null,null);
-            Game.GraphicsDevice.DeviceResetting += new EventHandler<EventArgs>(GraphicsDevice_DeviceResetting);
+            GraphicsDevice_DeviceReset(null, null);
+            Game.GraphicsDevice.DeviceReset += new EventHandler<EventArgs>(GraphicsDevice_DeviceReset);
 
             base.Initialize();
             CanyonGame.Console.Trace("InputManager initialized.");
         }
 
-        private void GraphicsDevice_DeviceResetting(object sender, EventArgs e)
+        private void GraphicsDevice_DeviceReset(object sender, EventArgs e)
         {
             if( center != Vector2.Zero )
-                CanyonGame.Console.Trace("Device resetted, updated center vector in InputManager.");
+                CanyonGame.Console.Trace("Device resetted, updated center vector and screen factor in InputManager.");
             center = new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2);
             screenFactor = new Vector2( 
                 (500.0f * Game.GraphicsDevice.Viewport.AspectRatio) / Game.GraphicsDevice.Viewport.Width,
@@ -70,25 +71,31 @@ namespace Canyon
 
         public override void Update(GameTime gameTime)
         {
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            this.pkbs = this.ckbs;
+            this.pms = this.cms;
+            this.pgps = this.cgps;
+
             // Keep keyboardstate on hold if the console is visible:
             this.ckbs = CanyonGame.Console.Visible ? this.pkbs : Keyboard.GetState();
             // The rest still works:
             this.cms = Mouse.GetState();
             this.cgps = GamePad.GetState(PlayerIndex.One);
 
-            this.HandleLook();
+            this.HandleLook(dt);
             this.HandleMovement();
             this.HandleRoll();
 
-            this.pkbs = this.ckbs;
-            this.pms = this.cms;
-            this.pgps = this.cgps;
             base.Update(gameTime);
         }
 
-        private void HandleLook()
+        private void HandleLook(float dt)
         {
-            Vector2 delta = new Vector2(cms.X - center.X, cms.Y - center.Y) *screenFactor;
+            // frag mouse movement on different frame rates and resolutions...
+            Vector2 delta = new Vector2(cms.X - center.X, cms.Y - center.Y) * screenFactor / dt / 1000f;
+            if (!delta.IsValid())
+                delta = Vector2.Zero;
             Vector2 RightThumb = new Vector2( cgps.ThumbSticks.Right.X, -cgps.ThumbSticks.Right.Y);
             this.Look = delta + RightThumb;
 

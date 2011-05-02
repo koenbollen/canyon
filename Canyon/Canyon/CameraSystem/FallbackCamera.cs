@@ -16,9 +16,15 @@ namespace Canyon.CameraSystem
 
         public FallbackCamera()
         {
-            View = Matrix.CreateLookAt(Vector3.Up * CanyonGame.FarPlane/2, Vector3.Zero, Vector3.Forward);
-            float a = (CanyonGame.FarPlane/4.0f) * CanyonGame.AspectRatio;
-            float b = (CanyonGame.FarPlane/4.0f);
+            View = Matrix.CreateLookAt(Vector3.Up * CanyonGame.FarPlane / 2, Vector3.Zero, Vector3.Forward);
+            UpdateProjection();
+            CanyonGame.Instance.GraphicsDevice.DeviceReset += delegate(object s, EventArgs e) { UpdateProjection(); };
+        }
+
+        private void UpdateProjection()
+        {
+            float a = (CanyonGame.FarPlane / 4.0f) * CanyonGame.AspectRatio;
+            float b = (CanyonGame.FarPlane / 4.0f);
             Projection = Matrix.CreateOrthographicOffCenter(-a, a, -b, b, CanyonGame.NearPlane, CanyonGame.FarPlane);
         }
     }

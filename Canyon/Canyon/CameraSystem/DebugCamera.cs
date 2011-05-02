@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace Canyon.CameraSystem
 {
@@ -78,11 +79,6 @@ namespace Canyon.CameraSystem
             Position = position;
             HorizontalRotation = horizontalRotation;
             VerticalRotation = verticalRotation;
-            Projection = Matrix.CreatePerspectiveFieldOfView(
-                MathHelper.PiOver4, CanyonGame.AspectRatio,
-                CanyonGame.NearPlane, CanyonGame.FarPlane);
-            if (ProjectionChanged != null)
-                ProjectionChanged(this);
             speed = 10;
         }
 
@@ -99,15 +95,27 @@ namespace Canyon.CameraSystem
                 CanyonGame.Console.Trace("DebugCamera: " + this.position + " (h: " + this.HorizontalRotation + " v: " + this.VerticalRotation + ")");
             };
 
+            UpdateProjection();
+            CanyonGame.Instance.GraphicsDevice.DeviceReset += delegate(object s, EventArgs e) { UpdateProjection(); };
 
             base.Initialize();
+        }
+
+        private void UpdateProjection()
+        {
+            Projection = Matrix.CreatePerspectiveFieldOfView(
+                MathHelper.PiOver4, CanyonGame.AspectRatio,
+                CanyonGame.NearPlane, CanyonGame.FarPlane);
+            if (ProjectionChanged != null)
+                ProjectionChanged(this);
         }
 
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            Input.CenterMouse = CanyonGame.Camera == this;
+            if (CanyonGame.Camera != this)
+                return;
 
             this.HorizontalRotation += -Input.Look.X * dt;
             this.VerticalRotation += -Input.Look.Y * dt;

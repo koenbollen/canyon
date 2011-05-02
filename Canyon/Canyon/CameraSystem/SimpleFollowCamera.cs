@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Canyon.Misc;
+using System;
 
 namespace Canyon.CameraSystem
 {
@@ -33,18 +34,24 @@ namespace Canyon.CameraSystem
             this.distance = distance;
             this.angle = angle;
 
+            UpdateProjection();
+            CanyonGame.Instance.GraphicsDevice.DeviceReset += delegate(object s, EventArgs e) { UpdateProjection(); };
+
+            this.UpdateView();
+        }
+
+        private void UpdateProjection()
+        {
             Projection = Matrix.CreatePerspectiveFieldOfView(
                 MathHelper.PiOver4, CanyonGame.AspectRatio,
                 CanyonGame.NearPlane, CanyonGame.FarPlane);
             if (ProjectionChanged != null)
                 ProjectionChanged(this);
-
-            this.UpdateView();
         }
 
         private void UpdateView()
         {
-            Vector3 right = Vector3.Cross(Direction, Vector3.Up);
+            Vector3 right = Vector3.Cross(Direction.Flatten(), Vector3.Up);
             Vector3 position = target + (-Vector3.Transform(Direction, Matrix.CreateFromAxisAngle(right, this.angle)) * distance);
             View = Matrix.CreateLookAt(position, target, Vector3.Up);
             if (ViewChanged != null)
