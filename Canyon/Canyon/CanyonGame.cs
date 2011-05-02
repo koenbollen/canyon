@@ -7,6 +7,7 @@ using Canyon.Screens;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.IO;
 
 namespace Canyon
 {
@@ -108,6 +109,29 @@ namespace Canyon
                     CanyonGame.Camera = last;
             };
 #endif // DEBUG
+
+            CanyonGame.Console.Commands["map"] = delegate(Game game, string[] argv, GameTime gameTime)
+            {
+                if (argv.Length < 2)
+                {
+                    CanyonGame.Console.WriteLine("usage: map <mapname>");
+                    return;
+                }
+                string mapname = argv[1];
+                string[] files = Directory.GetFiles(this.Content.RootDirectory + "/" + GameScreen.MapDirectory);
+                for (int i = 0; i < files.Length; i++)
+                {
+                    string file = files[i];
+                    if (file.EndsWith(mapname + ".xnb"))
+                    {
+                        CanyonGame.Screens.Replace<GameScreen>(new GameScreen(this, mapname));
+                        return;
+                    }
+                }
+                CanyonGame.Console.WriteLine("error: couldn't find map: " + mapname);
+
+            };
+
         }
 
         protected override void LoadContent()

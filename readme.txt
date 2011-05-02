@@ -5,7 +5,7 @@ SimpleConsole
 Camera system -------- Free, follow, firstperson (use excludelist)
 Terrain ------ Tiled, Continues loading?
 Physics? ----- Jitter? or simple custom.
-Ship/Player
+Ship/Player ---- auto level is roll is not so rolly.
 Input ----- Manager, support multple inputdevices (controller/keyboard)
 Shooting ----- Beams/energy, rockets, bullets?
 Particles ----- Simple

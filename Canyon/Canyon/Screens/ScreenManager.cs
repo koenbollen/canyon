@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using System;
 
 
 namespace Canyon.Screens
@@ -139,6 +140,40 @@ namespace Canyon.Screens
                 this.ActiveScreen.Activated();
             CanyonGame.Console.Trace("Screen changed to " + ActiveScreen.GetType().Name);
             return prev;
+        }
+
+        /// <summary>
+        /// This method finds the first Screen of a specific 
+        /// type and replaces it with a new one.
+        /// 
+        /// It searches from the top of the stack and does 
+        /// the popping it self. The ManagerMethod it uses
+        /// is the Push() method when it finds the screen 
+        /// to replace.
+        /// </summary>
+        /// <typeparam name="T">Type of Screen to replace.</typeparam>
+        /// <param name="newScreen">The new screen to replace the found screen of T.</param>
+        /// <returns></returns>
+        public Screen Replace<T>(Screen newScreen) where T : Screen
+        {
+            if (this.screens.Count < 1)
+                return null;
+
+            Screen prev = null;
+            Stack<Screen> store = new Stack<Screen>();
+            while (this.screens.Count > 0 && !(this.screens.Peek() is T) )
+            {
+                store.Push(this.screens.Pop());
+            }
+            if (this.screens.Count > 0 && (this.screens.Peek() is T))
+            {
+                prev = this.screens.Pop();
+                prev.Deactivated();
+                this.Push(newScreen);
+            }
+            while( store.Count > 0 )
+                this.screens.Push(store.Pop());
+            return null;
         }
     }
 }
