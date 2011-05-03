@@ -10,11 +10,11 @@ namespace Canyon.Entities
         public const float PitchStep = MathHelper.Pi / 4;
         public const float YawStep = MathHelper.Pi / 4;
         public const float RollStep = MathHelper.PiOver2;
+        public const float Speed = 50f;
 
         public Vector3 Position { get; protected set; }
-        public Matrix World { get; protected set; }
-
         public Quaternion Orientation { get; protected set; }
+
         public Vector3 Forward { get { return Vector3.Transform(Vector3.Forward, this.Orientation); } }
         public Vector3 Left { get { return Vector3.Transform(Vector3.Left, this.Orientation); } }
         public Vector3 Up { get { return Vector3.Transform(Vector3.Up, this.Orientation); } }
@@ -53,21 +53,38 @@ namespace Canyon.Entities
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            World = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(this.Position);
 
-            this.Position += this.Forward * -Input.Movement.Z * 50 * dt; // tmp ofc.
+            this.UpdateOrientation(dt);
 
-            Quaternion step = Quaternion.CreateFromYawPitchRoll(-Input.Look.X * YawStep * dt, -Input.Look.Y * PitchStep * dt, -Input.Movement.X * RollStep * dt);
-            this.Orientation = this.Orientation * step;
-            
-            followCamera.Target = this.Position;
-            followCamera.Direction = this.Forward;
+            this.Position += this.Forward * Speed * -Input.Movement.Z * dt;
 
             base.Update(gameTime);
         }
 
+        private void UpdateOrientation(float dt)
+        {
+            Quaternion yaw, pitch, roll;
+            yaw = pitch = roll = Quaternion.Identity;
+
+            if( Input.Look.X != 0 )
+                yaw = Quaternion.CreateFromYawPitchRoll(-Input.Look.X * YawStep * dt, 0, 0);
+            if( Input.Look.Y != 0 )
+                pitch = Quaternion.CreateFromYawPitchRoll(0, -Input.Look.Y * PitchStep * dt, 0);
+            if( Input.Movement.X != 0 )
+                roll = Quaternion.CreateFromYawPitchRoll(0, 0, -Input.Movement.X * RollStep * dt);
+
+            // yes, I tried every possible order of the following multiplication:
+            this.Orientation = yaw * this.Orientation * roll * pitch;
+
+            // Update camera on the new orientation:
+            followCamera.Target = this.Position;
+            followCamera.Direction = this.Forward;
+        }
+
         public override void Draw(GameTime gameTime)
         {
+            Matrix world = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(this.Position);
+
             Matrix[] transforms = new Matrix[this.model.Bones.Count];
             this.model.CopyAbsoluteBoneTransformsTo(transforms);
 
@@ -78,7 +95,7 @@ namespace Canyon.Entities
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.World = transforms[mesh.ParentBone.Index] * this.World;
+                    effect.World = transforms[mesh.ParentBone.Index] * world;
                     effect.View = CanyonGame.Camera.View;
                     effect.Projection = CanyonGame.Camera.Projection;
                     effect.EnableDefaultLighting();

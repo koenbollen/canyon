@@ -12,6 +12,7 @@ using System.IO;
 namespace Canyon
 {
     public delegate void OnCameraChanged( ICamera prev, ICamera current );
+
     public class CanyonGame : Microsoft.Xna.Framework.Game
     {
         public static CanyonGame Instance { get; private set; }
@@ -52,7 +53,7 @@ namespace Canyon
 
 
 #if !XBOX
-            Window.Title = "Canyon Shooter, by Koen Bollen (2011, HvA)";
+            Window.Title = "Canyon Shooter, by Koen Bollen (2011 HvA)";
 #endif // !XBOX
         }
 
@@ -130,6 +131,11 @@ namespace Canyon
                 }
                 CanyonGame.Console.WriteLine("error: couldn't find map: " + mapname);
 
+            };
+            CanyonGame.Console.Commands["gc"] = delegate(Game game, string[] argv, GameTime gameTime)
+            {
+                GC.Collect();
+                CanyonGame.Console.WriteLine("GarbageCollector called.");
             };
 
         }
