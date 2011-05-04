@@ -78,7 +78,7 @@ namespace Canyon
             this.pgps = this.cgps;
 
             // Keep keyboardstate on hold if the console is visible:
-            this.ckbs = CanyonGame.Console.Visible ? this.pkbs : Keyboard.GetState();
+            this.ckbs = CanyonGame.Console.Open ? this.pkbs : Keyboard.GetState();
             // The rest still works:
             this.cms = Mouse.GetState();
             this.cgps = GamePad.GetState(PlayerIndex.One);

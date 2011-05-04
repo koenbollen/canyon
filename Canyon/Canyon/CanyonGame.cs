@@ -68,6 +68,7 @@ namespace Canyon
 #if DEBUG
             this.Components.Add(new FrameCounter(this));
             this.Components.Add(new VectorDrawer(this));
+            this.Components.Add(new Grid(this, (int)(FarPlane/20), 10));
 #endif // !DEBUG
 
             // Initialize the sceen manager:
@@ -111,27 +112,6 @@ namespace Canyon
             };
 #endif // DEBUG
 
-            CanyonGame.Console.Commands["map"] = delegate(Game game, string[] argv, GameTime gameTime)
-            {
-                if (argv.Length < 2)
-                {
-                    CanyonGame.Console.WriteLine("usage: map <mapname>");
-                    return;
-                }
-                string mapname = argv[1];
-                string[] files = Directory.GetFiles(this.Content.RootDirectory + "/" + GameScreen.MapDirectory);
-                for (int i = 0; i < files.Length; i++)
-                {
-                    string file = files[i];
-                    if (file.EndsWith(mapname + ".xnb"))
-                    {
-                        CanyonGame.Screens.Replace<GameScreen>(new GameScreen(this, mapname));
-                        return;
-                    }
-                }
-                CanyonGame.Console.WriteLine("error: couldn't find map: " + mapname);
-
-            };
             CanyonGame.Console.Commands["gc"] = delegate(Game game, string[] argv, GameTime gameTime)
             {
                 GC.Collect();
@@ -146,9 +126,8 @@ namespace Canyon
 
         protected override void Update(GameTime gameTime)
         {
-            if (DoExit || GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+            if (this.DoExit)
                 this.Exit();
-
 #if DEBUG
             if (Input.IsJustDown(Keys.OemPlus))
                 this.TargetElapsedTime += new TimeSpan(0, 0, 0, 0, 1);

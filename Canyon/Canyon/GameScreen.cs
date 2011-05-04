@@ -2,6 +2,11 @@
 using Canyon.Screens;
 using Canyon.Entities;
 using Canyon.Environment;
+using System.IO;
+using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
+using System;
+using System.Text;
 
 namespace Canyon
 {
@@ -13,23 +18,115 @@ namespace Canyon
         private string mapname;
         private Player player;
 
+        private string changemap;
+
         public GameScreen(Game game, string mapname=DefaultMap)
             :base(game)
         {
             this.mapname = mapname;
+            this.changemap = null;
         }
 
         public override void Initialize()
         {
+            RegisterCommands();
+
             CanyonGame.Console.Trace("Loading map: " + this.mapname + "...");
             this.Components.Add(new Terrain(Game, MapDirectory + "/" + this.mapname));
             this.Components.Add(this.player = new Player(Game, Vector3.One* 30));
             base.Initialize();
         }
 
+        private void RegisterCommands()
+        {
+            // Re-add the 'map' command cause it houses a local variable, namely this.changelevel.
+            #region Command 'map' 
+            CanyonGame.Console.Commands["map"] = delegate(Game game, string[] argv, GameTime gameTime)
+            {
+                if (argv.Length < 2)
+                {
+                    CanyonGame.Console.WriteLine("usage: map <mapname>");
+                    return;
+                }
+                string newmap = argv[1];
+                string[] files = Directory.GetFiles(Game.Content.RootDirectory + "/" + GameScreen.MapDirectory);
+                for (int i = 0; i < files.Length; i++)
+                {
+                    string file = files[i];
+                    if (file.EndsWith(newmap + ".xnb"))
+                    {
+                        GameScreen gs = CanyonGame.Screens.FirstByType<GameScreen>();
+                        if( gs != null )
+                            gs.Changema( newmap );
+                        return;
+                    }
+                }
+                CanyonGame.Console.WriteLine("error: couldn't find map: " + newmap);
+            };
+            #endregion
+
+
+            // Commands added after this point are only added once.
+            if (CanyonGame.Console.Commands.ContainsKey("maps"))
+                return;
+
+
+            #region Command 'maps'
+            CanyonGame.Console.Commands["maps"] = delegate(Game game, string[] argv, GameTime gameTime)
+            {
+                CanyonGame.Console.WriteLine("Available maps:");
+                string[] files = Directory.GetFiles(Game.Content.RootDirectory + "/" + GameScreen.MapDirectory);
+                int maxlen = 0;
+                List<string> maps = new List<string>();
+                for (int i = 0; i < files.Length; i++)
+                {
+                    string file = files[i];
+                    file = file.Substring(0, file.IndexOf("."));
+                    file = file.Substring(file.IndexOf("/") + 1);
+                    file = file.Substring(file.IndexOf("\\") + 1);
+                    maxlen = Math.Max(maxlen, file.Length);
+                    maps.Add(file);
+                }
+                maxlen += 2;
+                string fmt = "{0,-" + maxlen+"}";
+                StringBuilder sb = new StringBuilder("  ");
+                for (int i = 0; i < maps.Count; i++)
+                {
+                    sb.AppendFormat( fmt, maps[i] );
+                    if (i % 4 == 3)
+                    {
+                        CanyonGame.Console.WriteLine(" " + sb.ToString());
+                        sb.Clear();
+                        sb.Append("  ");
+                    }
+                }
+                CanyonGame.Console.WriteLine(" " + sb.ToString());
+            };
+            #endregion
+        }
+
+        private void Changema(string newmap)
+        {
+            if (this.changemap == null)
+                this.changemap = newmap;
+        }
+
         protected override void LoadContent()
         {
             base.LoadContent();
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            if (CanyonGame.Input.IsJustUp(Keys.Escape) || GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+                CanyonGame.Instance.DoExit = true;
+            if (changemap != null)
+            {
+                CanyonGame.Screens.Replace<GameScreen>(new GameScreen(Game, changemap));
+                return;
+            }
+
+            base.Update(gameTime);
         }
 
     }

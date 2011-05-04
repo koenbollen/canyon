@@ -36,5 +36,15 @@ namespace Canyon.Misc
                 return false;
             return true;
         }
+
+        /// <summary>
+        /// Convert the Vector to a usefull string.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public static string ToInfo(this Vector3 v)
+        {
+            return string.Format("{0:N}, {1:N}, {2:N} ({3:N})", v.X, v.Y, v.Z, v.Length());
+        }
     }
 }

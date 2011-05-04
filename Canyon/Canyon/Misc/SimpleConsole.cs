@@ -15,6 +15,7 @@ namespace Canyon.Misc
         public Color Color = Color.White;
         public float Alpha = 0.8f;
         public int LineCount = 10;
+        public int EchoLineCount = 4;
         public float Padding = 4;
         public string FontAsset = "Fonts/console";
     }
@@ -30,6 +31,7 @@ namespace Canyon.Misc
         private string input;
         private int cursor;
         private string last;
+        private bool echo;
 
         private float height { get { if (this.font == null) return 200; return (this.font.LineSpacing * Settings.LineCount) + (2*Settings.Padding); } }
 
@@ -39,6 +41,8 @@ namespace Canyon.Misc
 
         private KeyboardState kbs;
         private KeyMap keyMap;
+
+        public bool Open { get; set; }
 
         public SimpleConsole(Game game, ConsoleSettings settings = null )
             : base(game)
@@ -64,6 +68,19 @@ namespace Canyon.Misc
             };
             this.Commands["echo"] = delegate(Game game, string[] argv, GameTime gameTime)
             {
+                if (argv.Length > 1)
+                {
+                    if ("on".Equals(argv[1], System.StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        this.echo = true;
+                        return;
+                    }
+                    if ("off".Equals(argv[1], System.StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        this.echo = false;
+                        return;
+                    }
+                }
                 StringBuilder sb = new StringBuilder();
                 for (int i = 1; i < argv.Length; i++)
                 {
@@ -87,7 +104,8 @@ namespace Canyon.Misc
 
         public override void Initialize()
         {
-            this.Visible = false;
+            this.Open = false;
+            this.echo = false;
             this.RegisterDefaults();
             this.kbs = Keyboard.GetState();
             this.keyMap = new KeyMap();
@@ -106,17 +124,16 @@ namespace Canyon.Misc
         public override void Update(GameTime gameTime)
         {
             KeyboardState kbs = Keyboard.GetState();
-            if (!this.Visible)
+            if (!this.Open)
             {
                 if (kbs.IsKeyDown(Keys.OemTilde) && this.kbs.IsKeyUp(Keys.OemTilde))
-                    this.Visible = true;
+                    this.Open = true;
                 this.kbs = kbs;
                 base.Update(gameTime);
                 return;
-            }
-            if (kbs.IsKeyDown(Keys.Escape) && this.kbs.IsKeyUp(Keys.Escape))
+            } else if ((kbs.IsKeyDown(Keys.Escape) && this.kbs.IsKeyUp(Keys.Escape)) || (kbs.IsKeyDown(Keys.OemTilde) && this.kbs.IsKeyUp(Keys.OemTilde)))
             {
-                this.Visible = false;
+                this.Open = false;
                 this.kbs = kbs;
                 base.Update(gameTime);
                 return;
@@ -174,11 +191,13 @@ namespace Canyon.Misc
 
         public override void Draw(GameTime gameTime)
         {
-            string inputline = "] " + this.input;
-            float y = this.height - Settings.Padding - this.font.LineSpacing;
+            if (this.Open)
+            {
+                string inputline = "] " + this.input;
+                float y = this.height - Settings.Padding - this.font.LineSpacing;
 
-            #region Draw Background Quad:
-            VertexPositionColor[] vertices = new VertexPositionColor[] {
+                #region Draw Background Quad:
+                VertexPositionColor[] vertices = new VertexPositionColor[] {
                 new VertexPositionColor( new Vector3(0, 0, 0), Color.White ),
                 new VertexPositionColor( new Vector3(Game.GraphicsDevice.Viewport.Width, 0, 0), Color.White ),
                 new VertexPositionColor( new Vector3(Game.GraphicsDevice.Viewport.Width, this.height, 0), Color.White ),
@@ -188,62 +207,80 @@ namespace Canyon.Misc
                 new VertexPositionColor( new Vector3(0, height, 0), Color.White )
             };
 
-            this.effect.Projection = Matrix.CreateOrthographicOffCenter(
-                0, Game.GraphicsDevice.Viewport.Width, Game.GraphicsDevice.Viewport.Height, 0,
-                0, 1);
-            this.effect.DiffuseColor = this.Settings.Background.ToVector3();
-            this.effect.Alpha = this.Settings.Alpha;
+                this.effect.Projection = Matrix.CreateOrthographicOffCenter(
+                    0, Game.GraphicsDevice.Viewport.Width, Game.GraphicsDevice.Viewport.Height, 0,
+                    0, 1);
+                this.effect.DiffuseColor = this.Settings.Background.ToVector3();
+                this.effect.Alpha = this.Settings.Alpha;
 
-            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
-            GraphicsDevice.BlendState = BlendState.AlphaBlend;
+                GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+                GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.TriangleList, vertices, 0, 2);
-            }
-            #endregion
-
-            this.batch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-
-
-            #region Draw input and lines:
-            this.batch.DrawString(this.font, inputline, new Vector2(Settings.Padding, y), this.Settings.Color);
-            y -= this.font.LineSpacing;
-
-            int index = 1;
-            while (index < Settings.LineCount && this.lines.Count-index >= 0)
-            {
-                string line = this.lines[this.lines.Count - index];
-                foreach( string chunk in BuildLines(Game.GraphicsDevice.Viewport.Width - Settings.Padding*2, line ) )
+                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
                 {
-                    this.batch.DrawString(this.font, chunk, new Vector2(Settings.Padding, y), this.Settings.Color);
-                    y -= this.font.LineSpacing;
+                    pass.Apply();
+                    GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.TriangleList, vertices, 0, 2);
                 }
-                index++;
-            }
-            #endregion
+                #endregion
 
-            this.batch.End();
+                this.batch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
 
-            #region Draw cursor:
-            Vector2 cursor = this.font.MeasureString(inputline.Substring(0, 2 + this.cursor)) + new Vector2(Settings.Padding, 0);
-            cursor.Y = height - this.font.LineSpacing - Settings.Padding;
-            effect.DiffuseColor = Settings.Color.ToVector3();
-            effect.Alpha = 1.0f;
 
-            VertexPositionColor[] cursorverts = new VertexPositionColor[] {
+                #region Draw input and lines:
+                this.batch.DrawString(this.font, inputline, new Vector2(Settings.Padding, y), this.Settings.Color);
+                y -= this.font.LineSpacing;
+
+                int index = 1;
+                while (index < Settings.LineCount && this.lines.Count - index >= 0)
+                {
+                    string line = this.lines[this.lines.Count - index];
+                    foreach (string chunk in BuildLines(Game.GraphicsDevice.Viewport.Width - Settings.Padding * 2, line))
+                    {
+                        this.batch.DrawString(this.font, chunk, new Vector2(Settings.Padding, y), this.Settings.Color);
+                        y -= this.font.LineSpacing;
+                    }
+                    index++;
+                }
+                #endregion
+
+                this.batch.End();
+
+                #region Draw cursor:
+                Vector2 cursor = this.font.MeasureString(inputline.Substring(0, 2 + this.cursor)) + new Vector2(Settings.Padding, 0);
+                cursor.Y = height - this.font.LineSpacing - Settings.Padding;
+                effect.DiffuseColor = Settings.Color.ToVector3();
+                effect.Alpha = 1.0f;
+
+                VertexPositionColor[] cursorverts = new VertexPositionColor[] {
                         new VertexPositionColor( new Vector3(cursor, 0), Color.White ),
                         new VertexPositionColor( new Vector3(cursor.X, cursor.Y + font.LineSpacing, 0), Color.White )
                     };
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                Game.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList,
-                    cursorverts, 0, 1);
-            }
-            #endregion
+                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    Game.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList,
+                        cursorverts, 0, 1);
+                }
+                #endregion
 
+            }
+            else if (echo)
+            {
+                float y = Settings.Padding + (font.LineSpacing * (Settings.EchoLineCount-1));
+                this.batch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+                int index = 1;
+                while (index <= Settings.EchoLineCount && this.lines.Count - index >= 0)
+                {
+                    string line = this.lines[this.lines.Count - index];
+                    foreach (string chunk in BuildLines(Game.GraphicsDevice.Viewport.Width - Settings.Padding * 2, line))
+                    {
+                        this.batch.DrawString(this.font, chunk, new Vector2(Settings.Padding, y), this.Settings.Color);
+                        y -= this.font.LineSpacing;
+                    }
+                    index++;
+                }
+                this.batch.End();
+            }
             base.Draw(gameTime);
         }
 

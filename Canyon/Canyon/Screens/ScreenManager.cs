@@ -175,5 +175,19 @@ namespace Canyon.Screens
                 this.screens.Push(store.Pop());
             return null;
         }
+
+        /// <summary>
+        /// Return the first of a certain screen type. Used 
+        /// the normal Enumerator to loop through the stack.
+        /// </summary>
+        /// <typeparam name="T">The type to find.</typeparam>
+        /// <returns>The found Screen of type T or null if none where found.</returns>
+        public T FirstByType<T>() where T : Screen
+        {
+            foreach (Screen s in this.screens)
+                if (s is T)
+                    return s as T;
+            return null;
+        }
     }
 }
