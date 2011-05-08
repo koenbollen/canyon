@@ -23,6 +23,7 @@ namespace Canyon
 
         public event OnCameraChanged CameraChanged;
 
+        public static readonly Vector3 Gravity = new Vector3(0, -9.82f, 0);
         public static float AspectRatio = 4.0f / 3.0f;
         public static float NearPlane = 0.1f;
         public static float FarPlane = 1000.0f;

@@ -39,7 +39,11 @@ namespace Canyon
 
         private void RegisterCommands()
         {
-            // Re-add the 'map' command cause it houses a local variable, namely this.changelevel.
+
+            // Commands added after this point are only added once.
+            if (CanyonGame.Console.Commands.ContainsKey("maps"))
+                return;
+
             #region Command 'map' 
             CanyonGame.Console.Commands["map"] = delegate(Game game, string[] argv, GameTime gameTime)
             {
@@ -57,19 +61,13 @@ namespace Canyon
                     {
                         GameScreen gs = CanyonGame.Screens.FirstByType<GameScreen>();
                         if( gs != null )
-                            gs.Changema( newmap );
+                            gs.Changemap( newmap );
                         return;
                     }
                 }
                 CanyonGame.Console.WriteLine("error: couldn't find map: " + newmap);
             };
             #endregion
-
-
-            // Commands added after this point are only added once.
-            if (CanyonGame.Console.Commands.ContainsKey("maps"))
-                return;
-
 
             #region Command 'maps'
             CanyonGame.Console.Commands["maps"] = delegate(Game game, string[] argv, GameTime gameTime)
@@ -105,7 +103,7 @@ namespace Canyon
             #endregion
         }
 
-        private void Changema(string newmap)
+        public void Changemap(string newmap)
         {
             if (this.changemap == null)
                 this.changemap = newmap;

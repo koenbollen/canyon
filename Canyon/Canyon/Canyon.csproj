@@ -113,6 +113,7 @@
     <Compile Include="CameraSystem\IFollowCamera.cs" />
     <Compile Include="CameraSystem\SimpleFollowCamera.cs" />
     <Compile Include="CameraSystem\ICamera.cs" />
+    <Compile Include="CameraSystem\SpringFollowCamera.cs" />
     <Compile Include="CameraSystem\View.cs" />
     <Compile Include="Entities\IEntity.cs" />
     <Compile Include="Environment\Terrain.cs" />
