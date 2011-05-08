@@ -12,7 +12,7 @@ namespace Canyon.Entities
     {
         public const float PitchStep = MathHelper.Pi/8;
         public const float YawStep = MathHelper.Pi/16;
-        public const float RollStep = MathHelper.Pi;
+        public const float RollStep = MathHelper.Pi/2;
         public const float Speed = 2500f;
         public const float Drag = 0.97f;
 
@@ -138,13 +138,20 @@ namespace Canyon.Entities
 
         private void UpdateOrientation(float dt)
         {
-            Quaternion yaw, pitch, roll;
-            yaw = pitch = roll = Quaternion.Identity;
-
             if (Input.Look.X != 0)
-                orientation.Yaw += -Input.Look.X * YawStep * dt;
+            {
+                if (this.Up.Y < 0)
+                    orientation.Yaw += Input.Look.X * YawStep * dt;
+                else
+                    orientation.Yaw += -Input.Look.X * YawStep * dt;
+            }
             if (Input.Look.Y != 0)
-                orientation.Pitch += -Input.Look.Y * PitchStep * dt;
+            {
+                if ( Math.Abs(this.orientation.Roll) > MathHelper.PiOver2  )
+                    orientation.Pitch += Input.Look.Y * PitchStep * dt;
+                else
+                    orientation.Pitch += -Input.Look.Y * PitchStep * dt;
+            }
             if (Input.Movement.X != 0)
                 orientation.Roll += -Input.Movement.X * RollStep * dt;
         }

@@ -274,6 +274,7 @@ namespace Canyon.Misc
                     string line = this.lines[this.lines.Count - index];
                     foreach (string chunk in BuildLines(Game.GraphicsDevice.Viewport.Width - Settings.Padding * 2, line))
                     {
+                        this.batch.DrawString(this.font, chunk, new Vector2(Settings.Padding, y)+Vector2.One, Color.Black);
                         this.batch.DrawString(this.font, chunk, new Vector2(Settings.Padding, y), this.Settings.Color);
                         y -= this.font.LineSpacing;
                     }
