@@ -15,8 +15,8 @@ namespace Canyon.Entities
         public const float RollStep = MathHelper.Pi/2;
         public const float RollCorrection = MathHelper.Pi / 16;
         public const float RollAffect = YawStep * 10;
-        public const float Speed = 2500f;
-        public const float Drag = 0.97f;
+        public const float Speed = 250f;
+        public const float Drag = 1.9f;
 
         private YawPitchRoll orientation;
 
@@ -174,11 +174,12 @@ namespace Canyon.Entities
             Thrust = Speed * MathHelper.Clamp(-Input.Movement.Z, 0, 1);
             this.Force += this.Forward * Thrust;
             this.Acceleration += Force / Mass;
+            this.Acceleration -= Velocity * Drag;
 
             this.Velocity += this.Acceleration * dt;
-            Velocity *= Drag;
-
             this.Position += this.Velocity * dt;
+
+            CanyonGame.Console.Debug("Player speed: " + Vector3.Dot(this.Forward, Velocity));
         }
 
         private void ClearForces()
