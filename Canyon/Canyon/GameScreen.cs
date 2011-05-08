@@ -33,7 +33,7 @@ namespace Canyon
 
             CanyonGame.Console.Trace("Loading map: " + this.mapname + "...");
             this.Components.Add(new Terrain(Game, MapDirectory + "/" + this.mapname));
-            this.Components.Add(this.player = new Player(Game, Vector3.One* 30));
+            this.Components.Add(this.player = new Player(this, Vector3.One* 30));
             base.Initialize();
         }
 

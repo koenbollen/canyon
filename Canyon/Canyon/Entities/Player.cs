@@ -13,6 +13,8 @@ namespace Canyon.Entities
         public const float PitchStep = MathHelper.Pi/8;
         public const float YawStep = MathHelper.Pi/16;
         public const float RollStep = MathHelper.Pi/2;
+        public const float RollCorrection = MathHelper.Pi / 16;
+        public const float RollAffect = YawStep * 10;
         public const float Speed = 2500f;
         public const float Drag = 0.97f;
 
@@ -38,13 +40,15 @@ namespace Canyon.Entities
         private SpringFollowCamera followCamera;
 
         protected InputManager Input;
-        public Player(Game game, Vector3 position)
-            : base(game)
+        protected GameScreen screen;
+        public Player(GameScreen screen, Vector3 position)
+            : base(screen.Game)
         {
+            this.screen = screen;
             this.Position = position;
 
             followCamera = new SpringFollowCamera(Game);
-            CanyonGame.Screens.ActiveScreen.Components.Add(followCamera);
+            screen.Components.Add(followCamera);
         }
 
         public override void Initialize()
@@ -110,10 +114,59 @@ namespace Canyon.Entities
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             this.UpdateOrientation(dt);
+            RollLogics(dt);
             UpdatePhysics(dt);
+            ClearForces();
             UpdateCamera();
 
             base.Update(gameTime);
+        }
+
+
+        /// <summary>
+        /// Apply some logics on the Roll of the ship. When the 
+        /// roll isn't level the angle will result in a certain 
+        /// amount of yaw and the roll is leveled back to 0.
+        /// </summary>
+        /// <param name="dt"></param>
+        private void RollLogics(float dt)
+        {
+            float roll = this.orientation.Roll;
+            Vector3 up = Vector3.Up;
+            if( this.Up.Y < 0 )
+                up = Vector3.Down;
+
+            float amount = Math.Abs(roll) / MathHelper.Pi * 2;
+            if (Math.Abs(roll) > MathHelper.PiOver2)
+                amount = 2.0f - amount;
+
+            float direction = roll < 0 ? -1 : 1;
+            if (Math.Abs(this.orientation.Pitch) > MathHelper.PiOver2)
+                direction *= -1;
+            
+            float speedFactor = Math.Min(1, Vector3.Dot(this.Forward, Velocity));
+            
+            this.orientation.Yaw += amount * direction * speedFactor * RollAffect * dt;
+
+
+
+            // Slowly roll to level:
+            if (roll > 0 && roll < MathHelper.PiOver2)
+            {
+                this.orientation.Roll = Math.Max(0, roll - RollCorrection * dt);
+            }
+            else if( roll > -MathHelper.PiOver2 && roll < 0 )
+            {
+                this.orientation.Roll = Math.Min(0, roll + RollCorrection * dt);
+            }
+            else if (roll > -MathHelper.Pi && roll < -MathHelper.PiOver2)
+            {
+                this.orientation.Roll = Math.Max(-MathHelper.Pi, roll - RollCorrection * dt);
+            }
+            else if (roll > MathHelper.PiOver2 && roll < MathHelper.Pi)
+            {
+                this.orientation.Roll = Math.Min(MathHelper.Pi, roll + RollCorrection * dt);
+            }
         }
 
         private void UpdatePhysics(float dt)
@@ -126,8 +179,6 @@ namespace Canyon.Entities
             Velocity *= Drag;
 
             this.Position += this.Velocity * dt;
-
-            ClearForces();
         }
 
         private void ClearForces()
