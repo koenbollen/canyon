@@ -10,5 +10,8 @@ namespace Canyon.CameraSystem
     {
         Vector3 Target { get; set; }
         Vector3 Direction { get; set; }
+        Vector3 Up { get; set; }
+
+        void Reset();
     }
 }

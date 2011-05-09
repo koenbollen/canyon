@@ -25,6 +25,7 @@ namespace Canyon.CameraSystem
             get { return direciton; }
             set { direciton = value; UpdateView(); }
         }
+        public Vector3 Up { get; set; }
 
         private float distance;
         private float angle;
@@ -40,6 +41,10 @@ namespace Canyon.CameraSystem
             this.UpdateView();
         }
 
+        public void Reset()
+        {
+        }
+
         private void UpdateProjection()
         {
             Projection = Matrix.CreatePerspectiveFieldOfView(
@@ -53,7 +58,7 @@ namespace Canyon.CameraSystem
         {
             Vector3 right = Vector3.Cross(Direction.Flatten(), Vector3.Up);
             Vector3 position = target + (-Vector3.Transform(Direction, Matrix.CreateFromAxisAngle(right, this.angle)) * distance);
-            View = Matrix.CreateLookAt(position, target, Vector3.Up);
+            View = Matrix.CreateLookAt(position, target, this.Up);
             if (ViewChanged != null)
                 ViewChanged(this);
         }

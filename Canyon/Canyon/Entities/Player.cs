@@ -1,13 +1,22 @@
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Canyon.CameraSystem;
-using Canyon.Misc;
 using System;
 using System.Linq;
+using Canyon.CameraSystem;
+using Canyon.Misc;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Canyon.HUD;
+using System.Collections.Generic;
 
 
 namespace Canyon.Entities
 {
+    public enum PlayerMode
+    {
+        Firstperson,
+        Thirdperson
+    }
+
     public class Player : DrawableGameComponent, IEntity
     {
         public const float PitchStep = MathHelper.Pi/8;
@@ -35,9 +44,13 @@ namespace Canyon.Entities
         public float Mass { get; protected set; }
         public float Thrust { get; protected set; }
 
+        public float AntiGravity { get; set; }
+
         private Model model;
 
-        private SpringFollowCamera followCamera;
+        public PlayerMode CurrentMode { get; private set; }
+
+        private Dictionary<PlayerMode, IFollowCamera> Cameras;
 
         protected InputManager Input;
         protected GameScreen screen;
@@ -47,8 +60,13 @@ namespace Canyon.Entities
             this.screen = screen;
             this.Position = position;
 
-            followCamera = new SpringFollowCamera(Game);
-            screen.Components.Add(followCamera);
+            CurrentMode = PlayerMode.Thirdperson;
+            Cameras = new Dictionary<PlayerMode, IFollowCamera>();
+            Cameras[PlayerMode.Firstperson] = new FirstpersonCamera(Game);
+            Cameras[PlayerMode.Thirdperson] = new SpringChaseCamera(Game);
+            foreach (IFollowCamera c in Cameras.Values)
+                if (c is IGameComponent)
+                    screen.Components.Add(c as IGameComponent);
         }
 
         public override void Initialize()
@@ -57,10 +75,12 @@ namespace Canyon.Entities
             Input.CenterMouse = true;
 
             this.Mass = 15.0f;
+            this.AntiGravity = 1;
 
-            CanyonGame.Instance.ChangeCamera(followCamera);
+            IFollowCamera fc = Cameras[CurrentMode];
+            CanyonGame.Instance.ChangeCamera(fc);
             this.UpdateCamera();
-            this.followCamera.Reset();
+            fc.Reset();
 
             #region Debug commands: yaw, pitch, roll
 #if DEBUG
@@ -113,13 +133,60 @@ namespace Canyon.Entities
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+            if (Input.IsJustDown(Keys.LeftShift))
+                ToggleMode();
+
             this.UpdateOrientation(dt);
             RollLogics(dt);
+            UpdateGravity(dt);
             UpdatePhysics(dt);
             ClearForces();
             UpdateCamera();
 
+            if (Cameras[CurrentMode] is IUpdateable)
+                (Cameras[CurrentMode] as IUpdateable).Update(gameTime);
+
             base.Update(gameTime);
+        }
+
+        private void ToggleMode()
+        {
+            if (CurrentMode == PlayerMode.Firstperson)
+                CurrentMode = PlayerMode.Thirdperson;
+            else
+                CurrentMode = PlayerMode.Firstperson;
+            IFollowCamera c = Cameras[CurrentMode];
+            if (CurrentMode == PlayerMode.Firstperson)
+            {
+                SpringChaseCamera p = Cameras[PlayerMode.Thirdperson] as SpringChaseCamera;
+                c.Direction = p.LookAt - p.Position;
+                c.Up = p.Up;
+                c.Target = p.Position;
+                c.Reset();
+                CanyonGame.Instance.ChangeCamera(c);
+            }
+            else
+            {
+                CanyonGame.Instance.ChangeCamera(c);
+                UpdateCamera();
+                c.Reset();
+            }
+        }
+
+        private void UpdateGravity(float dt)
+        {
+            if (Input.IsJustDown(Keys.R))
+            {
+                this.AntiGravity += .1f;
+            }
+            if (Input.IsJustDown(Keys.F))
+            {
+                this.AntiGravity -= .1f;
+            }
+
+            this.Force += CanyonGame.Gravity;
+            this.AntiGravity = MathHelper.Clamp(this.AntiGravity, 0, 2);
+            this.Force += -CanyonGame.Gravity * this.AntiGravity;
         }
 
 
@@ -179,7 +246,6 @@ namespace Canyon.Entities
             this.Velocity += this.Acceleration * dt;
             this.Position += this.Velocity * dt;
 
-            CanyonGame.Console.Debug("Player speed: " + Vector3.Dot(this.Forward, Velocity));
         }
 
         private void ClearForces()
@@ -210,9 +276,10 @@ namespace Canyon.Entities
 
         private void UpdateCamera()
         {
-            followCamera.Target = this.Position;
-            followCamera.Direction = this.Forward;
-            followCamera.Up = this.Up;
+            IFollowCamera fc = Cameras[CurrentMode];
+            fc.Target = this.Position;
+            fc.Direction = this.Forward;
+            fc.Up = this.Up;
         }
 
         public override void Draw(GameTime gameTime)

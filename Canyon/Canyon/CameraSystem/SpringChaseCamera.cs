@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.Xna.Framework;
 using Canyon.Misc;
+using Microsoft.Xna.Framework;
 
 namespace Canyon.CameraSystem
 {
-    public class SpringFollowCamera : GameComponent, IFollowCamera
+    public class SpringChaseCamera : GameComponent, IFollowCamera
     {
         public const float Mass = 50.0f;
         public const float Stiffness = 1800.0f;
@@ -122,7 +119,7 @@ namespace Canyon.CameraSystem
         protected Vector3 desiredPosition;
         public Vector3 Velocity { get; protected set; }
 
-        public SpringFollowCamera(Game game)
+        public SpringChaseCamera(Game game)
             : base(game)
         {
         }
