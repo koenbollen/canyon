@@ -14,29 +14,12 @@ namespace Canyon.CameraSystem
 
         public event OnProjectionChanged ProjectionChanged;
 
-        protected LerpVector3 target = new LerpVector3(1, 1);
-        public Vector3 Target
-        {
-            get { return target.Value; }
-            set { target.Value = value; }
-        }
+        public IFollowable Target { get; set; }
 
-        protected LerpVector3 direction = new LerpVector3(1, 1);
-        public Vector3 Direction
-        {
-            get { return direction.Value; }
-            set { direction.Value = value; }
-        }
-
-        protected LerpVector3 up = new LerpVector3(1, 1);
-        public Vector3 Up {
-            get { return up.Value; }
-            set { up.Value = value; }
-        }
-
-        public FirstpersonCamera(Game game)
+        public FirstpersonCamera(Game game, IFollowable target=null)
             :base(game)
         {
+            this.Target = target;
             UpdateProjection();
             game.GraphicsDevice.DeviceReset += delegate(object s, EventArgs a)
             {
@@ -45,20 +28,9 @@ namespace Canyon.CameraSystem
             Enabled = false;
         }
 
-        public void Reset()
-        {
-            target.Reset();
-            direction.Reset();
-            up.Reset();
-        }
-
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            target.Step(dt);
-            direction.Step(dt);
-            up.Step(dt);
-            //CanyonGame.Console.Debug(target.ToString());
             UpdateView();
             base.Update(gameTime);
         }
@@ -72,7 +44,21 @@ namespace Canyon.CameraSystem
 
         private void UpdateView()
         {
-            View = Matrix.CreateLookAt(this.Target, this.Target + this.Direction, this.Up);
+            Vector3 direction = this.Target.Orientation.Forward();
+            Vector3 up = this.Target.Orientation.Up();
+            View = Matrix.CreateLookAt(this.Target.Position, this.Target.Position + direction, up);
+        }
+
+        public void HardSet(IFollowable target = null)
+        {
+            if (target != null)
+            {
+            }
+        }
+
+        public IFollowable GetStateAsTarget()
+        {
+            return this.Target;
         }
     }
 }

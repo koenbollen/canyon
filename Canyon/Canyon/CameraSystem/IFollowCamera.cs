@@ -8,10 +8,9 @@ namespace Canyon.CameraSystem
 {
     public interface IFollowCamera : ICamera
     {
-        Vector3 Target { get; set; }
-        Vector3 Direction { get; set; }
-        Vector3 Up { get; set; }
+        IFollowable Target { get; set; }
 
-        void Reset();
+        void HardSet(IFollowable target=null);
+        IFollowable GetStateAsTarget();
     }
 }

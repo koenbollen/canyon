@@ -17,7 +17,7 @@ namespace Canyon.Entities
         Thirdperson
     }
 
-    public class Player : DrawableGameComponent, IEntity
+    public class Player : DrawableGameComponent, IEntity, IFollowable
     {
         public const float PitchStep = MathHelper.Pi/4;
         public const float YawStep = MathHelper.Pi/8;
@@ -60,10 +60,11 @@ namespace Canyon.Entities
             this.screen = screen;
             this.Position = position;
 
+            // Setup PlayerMode and cameras:
             CurrentMode = PlayerMode.Thirdperson;
             Cameras = new Dictionary<PlayerMode, IFollowCamera>();
-            Cameras[PlayerMode.Firstperson] = new FirstpersonCamera(Game);
-            Cameras[PlayerMode.Thirdperson] = new SpringChaseCamera(Game);
+            Cameras[PlayerMode.Firstperson] = new FirstpersonCamera(Game, this);
+            Cameras[PlayerMode.Thirdperson] = new SpringChaseCamera(Game, this);
             foreach (IFollowCamera c in Cameras.Values)
                 if (c is IGameComponent)
                     screen.Components.Add(c as IGameComponent);
@@ -79,8 +80,7 @@ namespace Canyon.Entities
 
             IFollowCamera fc = Cameras[CurrentMode];
             CanyonGame.Instance.ChangeCamera(fc);
-            this.UpdateCamera();
-            fc.Reset();
+            fc.HardSet();
 
             #region Debug commands: yaw, pitch, roll
 #if DEBUG
@@ -141,7 +141,6 @@ namespace Canyon.Entities
             UpdateGravity(dt);
             UpdatePhysics(dt);
             ClearForces();
-            UpdateCamera();
 
             if (Cameras[CurrentMode] is IUpdateable)
                 (Cameras[CurrentMode] as IUpdateable).Update(gameTime);
@@ -151,25 +150,21 @@ namespace Canyon.Entities
 
         private void ToggleMode()
         {
+            IFollowCamera p = Cameras[CurrentMode];
             if (CurrentMode == PlayerMode.Firstperson)
                 CurrentMode = PlayerMode.Thirdperson;
             else
                 CurrentMode = PlayerMode.Firstperson;
             IFollowCamera c = Cameras[CurrentMode];
-            if (CurrentMode == PlayerMode.Firstperson)
+            if (CurrentMode == PlayerMode.Firstperson) // Just changed to Firstperson:
             {
-                SpringChaseCamera p = Cameras[PlayerMode.Thirdperson] as SpringChaseCamera;
-                c.Direction = p.LookAt - p.Position;
-                c.Up = p.Up;
-                c.Target = p.Position;
-                c.Reset();
+                c.HardSet(p.GetStateAsTarget());
                 CanyonGame.Instance.ChangeCamera(c);
             }
             else
             {
+                c.HardSet(p.GetStateAsTarget());
                 CanyonGame.Instance.ChangeCamera(c);
-                UpdateCamera();
-                c.Reset();
             }
         }
 
@@ -272,14 +267,6 @@ namespace Canyon.Entities
             }
             if (Input.Movement.X != 0)
                 orientation.Roll += -Input.Movement.X * RollStep * dt;
-        }
-
-        private void UpdateCamera()
-        {
-            IFollowCamera fc = Cameras[CurrentMode];
-            fc.Target = this.Position;
-            fc.Direction = this.Forward;
-            fc.Up = this.Up;
         }
 
         public override void Draw(GameTime gameTime)

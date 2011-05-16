@@ -33,94 +33,25 @@ namespace Canyon.CameraSystem
         /// <summary>
         /// The target of the follow camera, the camera will look at this point + the lookOffset.
         /// </summary>
-        public Vector3 Target
-        {
-            get
-            {
-                return this.target;
-            }
-            set
-            {
-                if (this.target != value)
-                {
-                    this.target = value;
-                    this.TargetDirectionUpChanged();
-                }
-            }
-        }
-        protected Vector3 target;
-
-        /// <summary>
-        /// The direction that the Target is facing so the camera can look from behind it.
-        /// </summary>
-        public Vector3 Direction
-        {
-            get
-            {
-                return this.direction;
-            }
-            set
-            {
-                if (this.direction != value)
-                {
-                    this.direction = value.SafeNormalize();
-                    this.TargetDirectionUpChanged();
-                }
-            }
-        }
-        protected Vector3 direction;
+        public IFollowable Target { get; set; } 
 
         /// <summary>
         /// The result of the camera's LookAt position.
         /// </summary>
-        public Vector3 LookAt
-        {
-            get
-            {
-                return this.lookAt;
-            }
-        }
-        protected Vector3 lookAt;
+        public Vector3 LookAt { get; protected set; }
 
         /// <summary>
         /// The real position of the camera at any point.
         /// </summary>
-        public Vector3 Position
-        {
-            get
-            {
-                return this.position;
-            }
-        }
-        protected Vector3 position;
-
-        /// <summary>
-        /// The up vector of the camera, should be set from the target.
-        /// </summary>
-        public Vector3 Up
-        {
-            get
-            {
-                return this.up;
-            }
-            set
-            {
-                if (this.up != value)
-                {
-                    this.up = value.SafeNormalize();
-                    this.TargetDirectionUpChanged();
-                }
-            }
-        }
-        protected Vector3 up;
-
+        public Vector3 Position { get; protected set; }
 
         protected Vector3 desiredPosition;
         public Vector3 Velocity { get; protected set; }
 
-        public SpringChaseCamera(Game game)
+        public SpringChaseCamera(Game game, IFollowable target = null)
             : base(game)
         {
+            this.Target = target;
         }
 
         public override void Initialize()
@@ -130,11 +61,8 @@ namespace Canyon.CameraSystem
             {
                 this.UpdateProjection();
             };
-            this.target = Vector3.Zero;
-            this.lookAt = lookOffset;
-            this.direction = Vector3.Forward;
-            this.up = Vector3.Up;
-            this.desiredPosition = this.position = chaseOffset;
+            this.LookAt = lookOffset;
+            this.desiredPosition = this.Position = chaseOffset;
             base.Initialize();
         }
 
@@ -142,18 +70,22 @@ namespace Canyon.CameraSystem
         /// Reset the camera's motion/velocity and set the 
         /// position hard to the desired.
         /// </summary>
-        public void Reset()
+        public void HardSet(IFollowable target=null)
         {
-            UpdateWorld();
+            if (target != null)
+            {
+                IFollowable old = this.Target;
+                this.Target = target;
+                UpdateWorld();
+                this.Target = old;
+            }
+            else
+            {
+                UpdateWorld();
+            }
             this.Velocity = Vector3.Zero;
-            this.position = this.desiredPosition;
+            this.Position = this.desiredPosition;
             viewChanged = true;
-        }
-
-
-        protected void TargetDirectionUpChanged()
-        {
-            UpdateWorld();
         }
 
         /// <summary>
@@ -162,14 +94,8 @@ namespace Canyon.CameraSystem
         /// </summary>
         protected void UpdateWorld()
         {
-            Matrix transform = Matrix.Identity;
-            Vector3 right = Vector3.Cross(this.up, this.direction);
-            transform.Forward = this.direction;
-            transform.Up = this.up;
-            transform.Right = right;
-
-            desiredPosition = Target + Vector3.Transform(chaseOffset, transform);
-            lookAt = Target + Vector3.Transform(lookOffset, transform);
+            desiredPosition = this.Target.Position + Vector3.Transform(chaseOffset, this.Target.Orientation);
+            LookAt = this.Target.Position + Vector3.Transform(lookOffset, this.Target.Orientation);
         }
 
         /// <summary>
@@ -180,13 +106,15 @@ namespace Canyon.CameraSystem
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            Vector3 stretch = position - desiredPosition;
+            UpdateWorld();
+
+            Vector3 stretch = Position - desiredPosition;
             Vector3 force = -Stiffness * stretch - Damping * Velocity;
 
             Vector3 acceleration = force / Mass;
             Velocity += acceleration * dt;
 
-            position += Velocity * dt;
+            Position += Velocity * dt;
 
             viewChanged = true;
 
@@ -199,7 +127,7 @@ namespace Canyon.CameraSystem
         protected void UpdateView()
         {
             viewChanged = false;
-            view = Matrix.CreateLookAt(this.position, this.lookAt, this.up);
+            view = Matrix.CreateLookAt(this.Position, this.LookAt, this.Target.Orientation.Up());
         }
 
         /// <summary>
@@ -211,5 +139,11 @@ namespace Canyon.CameraSystem
             if (this.ProjectionChanged != null)
                 this.ProjectionChanged.Invoke(this);
         }
+
+        public IFollowable GetStateAsTarget()
+        {
+            return new Followable(this.Position, this.Target.Orientation);
+        }
+
     }
 }

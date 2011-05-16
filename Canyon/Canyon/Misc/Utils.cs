@@ -67,5 +67,42 @@ namespace Canyon.Misc
         {
             return string.Format("{0:N}, {1:N} ({2:N})", v.X, v.Y, v.Length());
         }
+
+        /// <summary>
+        /// Return the Up vector for this orientation.
+        /// 
+        /// Vector3.Transform(Vector3.Up, orientation);
+        /// </summary>
+        /// <param name="orientation">The orientation</param>
+        /// <returns>The transformed Up vector.</returns>
+        public static Vector3 Up(this Quaternion orientation)
+        {
+            return Vector3.Transform(Vector3.Up, orientation);
+        }
+
+        /// <summary>
+        /// Return the Forward vector for this orientation.
+        /// 
+        /// Vector3.Transform(Vector3.Forward, orientation);
+        /// </summary>
+        /// <param name="orientation">The orientation</param>
+        /// <returns>The transformed Forward vector.</returns>
+        public static Vector3 Forward(this Quaternion orientation)
+        {
+            return Vector3.Transform(Vector3.Forward, orientation);
+        }
+
+        /// <summary>
+        /// Return the Right vector for this orientation.
+        /// 
+        /// Vector3.Transform(Vector3.Right, orientation);
+        /// </summary>
+        /// <param name="orientation">The orientation</param>
+        /// <returns>The transformed Right vector.</returns>
+        public static Vector3 Right(this Quaternion orientation)
+        {
+            return Vector3.Transform(Vector3.Right, orientation);
+        }
+
     }
 }

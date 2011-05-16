@@ -132,9 +132,11 @@ namespace Canyon
             if (this.DoExit)
                 this.Exit();
 #if DEBUG
-            if (Input.IsJustDown(Keys.OemPlus))
+            if (Input.IsJustDown(Keys.OemPlus) && Input.IsKeyDown(Keys.OemMinus))
+                this.TargetElapsedTime = new TimeSpan(0, 0, 0, 0, 16);
+            else if (Input.IsJustDown(Keys.OemPlus))
                 this.TargetElapsedTime += new TimeSpan(0, 0, 0, 0, 1);
-            if (Input.IsJustDown(Keys.OemMinus) && this.TargetElapsedTime > new TimeSpan(0, 0, 0, 0, 1) )
+            else if (Input.IsJustDown(Keys.OemMinus) && this.TargetElapsedTime > new TimeSpan(0, 0, 0, 0, 1))
                 this.TargetElapsedTime -= new TimeSpan(0, 0, 0, 0, 1);
 
             if (gameTime.TotalGameTime.TotalMinutes > 2)
