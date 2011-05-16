@@ -10,7 +10,9 @@ namespace Canyon.CameraSystem
     {
         IFollowable Target { get; set; }
 
+        //Vector3 Position { get; }
+
         void HardSet(IFollowable target=null);
-        IFollowable GetStateAsTarget();
+        IFollowable GetCurrentStateAsTarget();
     }
 }

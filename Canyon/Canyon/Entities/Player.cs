@@ -158,12 +158,12 @@ namespace Canyon.Entities
             IFollowCamera c = Cameras[CurrentMode];
             if (CurrentMode == PlayerMode.Firstperson) // Just changed to Firstperson:
             {
-                c.HardSet(p.GetStateAsTarget());
+                c.HardSet(p.GetCurrentStateAsTarget());
                 CanyonGame.Instance.ChangeCamera(c);
             }
             else
             {
-                c.HardSet(p.GetStateAsTarget());
+                c.HardSet(p.GetCurrentStateAsTarget());
                 CanyonGame.Instance.ChangeCamera(c);
             }
         }

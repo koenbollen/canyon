@@ -140,9 +140,18 @@ namespace Canyon.CameraSystem
                 this.ProjectionChanged.Invoke(this);
         }
 
-        public IFollowable GetStateAsTarget()
+        public IFollowable GetCurrentStateAsTarget()
         {
-            return new Followable(this.Position, this.Target.Orientation);
+            Vector3 up = this.Target.Orientation.Up();
+            Vector3 forward = (this.LookAt-this.Position).SafeNormalize();
+            Vector3 right = Vector3.Cross(forward, up);
+            up = Vector3.Cross(right, forward);
+
+            Matrix rotation = Matrix.Identity;
+            rotation.Forward = forward;
+            rotation.Up = up;
+            rotation.Right = right;
+            return new Followable(this.Position, Quaternion.CreateFromRotationMatrix(rotation));
         }
 
     }

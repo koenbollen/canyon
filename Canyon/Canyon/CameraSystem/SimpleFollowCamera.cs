@@ -63,7 +63,7 @@ namespace Canyon.CameraSystem
             // This is already a hard follow camera.
         }
 
-        public IFollowable GetStateAsTarget()
+        public IFollowable GetCurrentStateAsTarget()
         {
             return this.Target;
         }
