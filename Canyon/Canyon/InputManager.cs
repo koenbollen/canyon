@@ -12,6 +12,7 @@ namespace Canyon
         public float Roll { get; protected set; }
 
         public bool CenterMouse { get; set; }
+        public float MouseSensitivity { get; set; }
 
         private KeyboardState pkbs;
         private KeyboardState ckbs;
@@ -20,7 +21,6 @@ namespace Canyon
         private GamePadState pgps;
         private GamePadState cgps;
 
-        private Vector2 screenFactor;
         private Vector2 center;
 
         public float ScrollWheelValue
@@ -41,6 +41,8 @@ namespace Canyon
         public InputManager(Game game)
             : base(game)
         {
+            CenterMouse = false;
+            MouseSensitivity = 50.0f;
         }
 
         public override void Initialize()
@@ -49,11 +51,12 @@ namespace Canyon
             cms = Mouse.GetState();
             cgps = GamePad.GetState(PlayerIndex.One);
 
-            CenterMouse = false;
-
             // Calculate center of the screen and keep it updated:
             GraphicsDevice_DeviceReset(null, null);
             Game.GraphicsDevice.DeviceReset += new EventHandler<EventArgs>(GraphicsDevice_DeviceReset);
+
+            if (CenterMouse)
+                Mouse.SetPosition((int)center.X, (int)center.Y);
 
             base.Initialize();
             CanyonGame.Console.Trace("InputManager initialized.");
@@ -62,11 +65,8 @@ namespace Canyon
         private void GraphicsDevice_DeviceReset(object sender, EventArgs e)
         {
             if( center != Vector2.Zero )
-                CanyonGame.Console.Trace("Device resetted, updated center vector and screen factor in InputManager.");
+                CanyonGame.Console.Trace("Device resetted, updated center vector in InputManager.");
             center = new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2);
-            screenFactor = new Vector2( 
-                (500.0f * Game.GraphicsDevice.Viewport.AspectRatio) / Game.GraphicsDevice.Viewport.Width,
-                500.0f / Game.GraphicsDevice.Viewport.Height );
         }
 
         public override void Update(GameTime gameTime)
@@ -92,15 +92,26 @@ namespace Canyon
 
         private void HandleLook(float dt)
         {
-            // frag mouse movement on different frame rates and resolutions...
-            Vector2 delta = new Vector2(cms.X - center.X, cms.Y - center.Y) * screenFactor / dt / 1000f;
-            if (!delta.IsValid())
+            Vector2 delta = new Vector2(cms.X - center.X, cms.Y - center.Y);
+            if (!delta.IsValid()) // check for NaN & Inf.
                 delta = Vector2.Zero;
             Vector2 RightThumb = new Vector2( cgps.ThumbSticks.Right.X, -cgps.ThumbSticks.Right.Y);
-            this.Look = delta + RightThumb;
+
+            this.Look = (delta / MouseSensitivity) + RightThumb;
+            this.Look = Vector2.Clamp(this.Look, -Vector2.One, Vector2.One);
 
             if (CenterMouse)
-                Mouse.SetPosition((int)this.center.X, (int)this.center.Y);
+            {
+                float length = delta.Length();
+                if (length > MouseSensitivity)
+                    length = MouseSensitivity;
+                else if (length < MouseSensitivity * 0.8f)
+                    length -= (MouseSensitivity) * dt;
+                else if (length < 0.01f)
+                    length = 0;
+                delta = delta.SafeNormalize() * length;
+                Mouse.SetPosition((int)Math.Round(center.X + delta.X), (int)Math.Round(center.Y + delta.Y));
+            }
         }
 
         private void HandleMovement()

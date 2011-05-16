@@ -19,6 +19,17 @@ namespace Canyon.Misc
         }
 
         /// <summary>
+        /// Normalize a vector only if the length isn't zero. This makes sure a division by zero doesn't occure.
+        /// </summary>
+        /// <param name="v">The vector to normalize.</param>
+        public static Vector2 SafeNormalize(this Vector2 v)
+        {
+            if (v.LengthSquared() > 0)
+                v.Normalize();
+            return v;
+        }
+
+        /// <summary>
         /// Set's the Vector's Y axis to Zero.
         /// </summary>
         /// <param name="v">The vector to flatten</param>
@@ -45,6 +56,16 @@ namespace Canyon.Misc
         public static string ToInfo(this Vector3 v)
         {
             return string.Format("{0:N}, {1:N}, {2:N} ({3:N})", v.X, v.Y, v.Z, v.Length());
+        }
+
+        /// <summary>
+        /// Convert the Vector to a usefull string.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public static string ToInfo(this Vector2 v)
+        {
+            return string.Format("{0:N}, {1:N} ({2:N})", v.X, v.Y, v.Length());
         }
     }
 }

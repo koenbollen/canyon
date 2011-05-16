@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.IO;
+using Microsoft.Xna.Framework.GamerServices;
 
 namespace Canyon
 {
@@ -134,10 +135,10 @@ namespace Canyon
                 this.TargetElapsedTime += new TimeSpan(0, 0, 0, 0, 1);
             if (Input.IsJustDown(Keys.OemMinus) && this.TargetElapsedTime > new TimeSpan(0, 0, 0, 0, 1) )
                 this.TargetElapsedTime -= new TimeSpan(0, 0, 0, 0, 1);
-#endif
 
             if (gameTime.TotalGameTime.TotalMinutes > 2)
                 this.Exit();
+#endif
 
             base.Update(gameTime);
         }
