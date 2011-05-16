@@ -77,7 +77,7 @@ namespace Canyon
             Screen start = new GameScreen(this);
             this.Components.Add(CanyonGame.Screens = new ScreenManager(this, start));
 
-            // Create a simple camera:
+            // Create a simple camera to fall back on:
 #if DEBUG
             DebugCamera camera = new DebugCamera(this, new Vector3(-20, 60, -20), -MathHelper.Pi/4*3, -MathHelper.Pi/8);
             this.Components.Add(camera);
@@ -87,8 +87,9 @@ namespace Canyon
 #endif // DEBUG
 
             this.RegisterConsoleCommands();
+
             base.Initialize();
-            GC.Collect(); // TODO: Move to LoadScreen
+            GC.Collect(); // TODO: Move to a LoadScreen
         }
 
         private void RegisterConsoleCommands()

@@ -19,8 +19,8 @@ namespace Canyon.Entities
 
     public class Player : DrawableGameComponent, IEntity
     {
-        public const float PitchStep = MathHelper.Pi/8;
-        public const float YawStep = MathHelper.Pi/16;
+        public const float PitchStep = MathHelper.Pi/4;
+        public const float YawStep = MathHelper.Pi/8;
         public const float RollStep = MathHelper.Pi/2;
         public const float RollCorrection = MathHelper.Pi / 16;
         public const float RollAffect = YawStep * 10;
@@ -133,7 +133,7 @@ namespace Canyon.Entities
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (Input.IsJustDown(Keys.LeftShift))
+            if (Input.TogglePlayerMode)
                 ToggleMode();
 
             this.UpdateOrientation(dt);

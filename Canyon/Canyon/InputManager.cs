@@ -38,6 +38,14 @@ namespace Canyon
             }
         }
 
+        public bool TogglePlayerMode
+        {
+            get
+            {
+                return this.IsJustDown(Keys.LeftShift) || this.IsJustDown(Buttons.LeftShoulder);
+            }
+        }
+
         public InputManager(Game game)
             : base(game)
         {
@@ -55,8 +63,7 @@ namespace Canyon
             GraphicsDevice_DeviceReset(null, null);
             Game.GraphicsDevice.DeviceReset += new EventHandler<EventArgs>(GraphicsDevice_DeviceReset);
 
-            if (CenterMouse)
-                Mouse.SetPosition((int)center.X, (int)center.Y);
+            Mouse.SetPosition((int)center.X, (int)center.Y);
 
             base.Initialize();
             CanyonGame.Console.Trace("InputManager initialized.");
@@ -159,10 +166,15 @@ namespace Canyon
         {
             return pkbs.IsKeyUp(key) && ckbs.IsKeyDown(key);
         }
+        public bool IsJustDown(Buttons button)
+        {
+            return pgps.IsButtonUp(button) && cgps.IsButtonDown(button);
+        }
         public bool IsJustUp(Keys key)
         {
             return pkbs.IsKeyDown(key) && ckbs.IsKeyUp(key);
         }
+
     }
 }
 
