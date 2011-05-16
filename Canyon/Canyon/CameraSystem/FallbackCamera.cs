@@ -11,7 +11,6 @@ namespace Canyon.CameraSystem
         public Matrix View { get; protected set; }
         public Matrix Projection { get; protected set; }
 
-        public event OnViewChanged ViewChanged;
         public event OnProjectionChanged ProjectionChanged;
 
         public FallbackCamera()
@@ -26,6 +25,8 @@ namespace Canyon.CameraSystem
             float a = (CanyonGame.FarPlane / 4.0f) * CanyonGame.AspectRatio;
             float b = (CanyonGame.FarPlane / 4.0f);
             Projection = Matrix.CreateOrthographicOffCenter(-a, a, -b, b, CanyonGame.NearPlane, CanyonGame.FarPlane);
+            if (ProjectionChanged != null)
+                ProjectionChanged.Invoke(this);
         }
     }
 }

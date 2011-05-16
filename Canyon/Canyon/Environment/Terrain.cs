@@ -77,28 +77,8 @@ namespace Canyon.Environment
         public override void Initialize()
         {
             TileSize = 32;
-            this.frustum = new BoundingFrustum(CanyonGame.Camera.View * CanyonGame.Camera.Projection);
-            CanyonGame.Instance.CameraChanged += new OnCameraChanged(CameraChanged);
-            CanyonGame.Camera.ViewChanged += new OnViewChanged(ViewOrProjectionChanged);
-            CanyonGame.Camera.ProjectionChanged += new OnProjectionChanged(ViewOrProjectionChanged);
-            ViewOrProjectionChanged(CanyonGame.Camera);
             base.Initialize();
             CanyonGame.Console.Trace("Terrain initialized.");
-        }
-
-        void CameraChanged(ICamera prev, ICamera current)
-        {
-            prev.ViewChanged -= new OnViewChanged(ViewOrProjectionChanged);
-            prev.ProjectionChanged -= new OnProjectionChanged(ViewOrProjectionChanged);
-            current.ViewChanged += new OnViewChanged(ViewOrProjectionChanged);
-            current.ProjectionChanged += new OnProjectionChanged(ViewOrProjectionChanged);
-            ViewOrProjectionChanged(current);
-        }
-
-        void ViewOrProjectionChanged(ICamera camera)
-        {
-            if (!CanyonGame.Input.IsKeyDown(Keys.LeftAlt))
-                this.frustum = new BoundingFrustum(camera.View * camera.Projection);
         }
 
         protected override void LoadContent()
@@ -330,6 +310,13 @@ namespace Canyon.Environment
 
         public override void Draw(GameTime gameTime)
         {
+#if DEBUG
+            if (!CanyonGame.Input.IsKeyDown(Keys.LeftAlt))
+                this.frustum = new BoundingFrustum(CanyonGame.Camera.View * CanyonGame.Camera.Projection);
+#else
+            this.frustum = new BoundingFrustum(CanyonGame.Camera.View * CanyonGame.Camera.Projection);
+#endif
+
             effect.CurrentTechnique = effect.Techniques["Colored"];
 
             effect.Parameters["World"].SetValue(Matrix.Identity);
@@ -359,7 +346,7 @@ namespace Canyon.Environment
             // Draw all tiles that are visible:
             foreach (TerrainTile tt in this.tiles)
             {
-                if (!frustum.Intersects(tt.BoundingBox))
+                if (!this.frustum.Intersects(tt.BoundingBox))
                     continue;
                 GraphicsDevice.SetVertexBuffer(tt.Buffer);
                 GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, tt.Buffer.VertexCount, 0, index.IndexCount / 3 );

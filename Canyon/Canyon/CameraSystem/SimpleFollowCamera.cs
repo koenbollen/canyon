@@ -10,7 +10,6 @@ namespace Canyon.CameraSystem
 
         public Matrix Projection { get; protected set; }
 
-        public event OnViewChanged ViewChanged;
         public event OnProjectionChanged ProjectionChanged;
 
         private Vector3 target;
@@ -59,8 +58,6 @@ namespace Canyon.CameraSystem
             Vector3 right = Vector3.Cross(Direction.Flatten(), Vector3.Up);
             Vector3 position = target + (-Vector3.Transform(Direction, Matrix.CreateFromAxisAngle(right, this.angle)) * distance);
             View = Matrix.CreateLookAt(position, target, this.Up);
-            if (ViewChanged != null)
-                ViewChanged(this);
         }
     }
 }

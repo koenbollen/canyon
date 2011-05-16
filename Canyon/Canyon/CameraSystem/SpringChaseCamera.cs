@@ -28,7 +28,6 @@ namespace Canyon.CameraSystem
         }
         public Matrix Projection { get; protected set; }
 
-        public event OnViewChanged ViewChanged;
         public event OnProjectionChanged ProjectionChanged;
 
         /// <summary>
@@ -201,8 +200,6 @@ namespace Canyon.CameraSystem
         {
             viewChanged = false;
             view = Matrix.CreateLookAt(this.position, this.lookAt, this.up);
-            if (this.ViewChanged != null)
-                this.ViewChanged.Invoke(this);
         }
 
         /// <summary>

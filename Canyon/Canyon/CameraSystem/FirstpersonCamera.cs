@@ -12,7 +12,6 @@ namespace Canyon.CameraSystem
         public Matrix View { get; protected set; }
         public Matrix Projection { get; protected set; }
 
-        public event OnViewChanged ViewChanged;
         public event OnProjectionChanged ProjectionChanged;
 
         protected LerpVector3 target = new LerpVector3(1, 1);
@@ -74,8 +73,6 @@ namespace Canyon.CameraSystem
         private void UpdateView()
         {
             View = Matrix.CreateLookAt(this.Target, this.Target + this.Direction, this.Up);
-            if (ViewChanged != null)
-                ViewChanged.Invoke(this);
         }
     }
 }

@@ -8,7 +8,6 @@ namespace Canyon.CameraSystem
 
         public Matrix Projection { get; protected set; }
 
-        public event OnViewChanged ViewChanged;
         public event OnProjectionChanged ProjectionChanged;
 
         /// <summary>
@@ -28,8 +27,6 @@ namespace Canyon.CameraSystem
         {
             this.View = view;
             this.Projection = projection;
-            if (ViewChanged != null)
-                ViewChanged(this);
             if (ProjectionChanged != null)
                 ProjectionChanged(this);
         }

@@ -21,8 +21,6 @@ namespace Canyon.CameraSystem
                 {
                     view = Matrix.CreateLookAt(this.Position, this.Position + this.Forward, this.Up);
                     viewChanged = false;
-                    if (ViewChanged != null)
-                        ViewChanged(this);
                 }
                 return view;
             }
@@ -30,7 +28,6 @@ namespace Canyon.CameraSystem
 
         public Matrix Projection { get; protected set; }
 
-        public event OnViewChanged ViewChanged;
         public event OnProjectionChanged ProjectionChanged;
 
         private Vector3 position;

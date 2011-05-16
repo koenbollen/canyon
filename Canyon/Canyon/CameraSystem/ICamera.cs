@@ -2,7 +2,6 @@
 
 namespace Canyon.CameraSystem
 {
-    public delegate void OnViewChanged(ICamera camera);
     public delegate void OnProjectionChanged(ICamera camera);
 
     /// <summary>
@@ -13,7 +12,6 @@ namespace Canyon.CameraSystem
         Matrix View { get; }
         Matrix Projection { get; }
 
-        event OnViewChanged ViewChanged;
         event OnProjectionChanged ProjectionChanged;
     }
 }
