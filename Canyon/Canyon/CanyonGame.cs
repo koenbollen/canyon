@@ -21,6 +21,9 @@ namespace Canyon
         public static ScreenManager Screens { get; private set; }
         public static ICamera Camera { get; private set; }
 
+        /// <summary>
+        /// This event will be fired when the main render ICamera is changed.
+        /// </summary>
         public event OnCameraChanged CameraChanged;
 
         public static readonly Vector3 Gravity = new Vector3(0, -98.2f, 0);
@@ -28,6 +31,14 @@ namespace Canyon
         public static float NearPlane = 0.1f;
         public static float FarPlane = 1000.0f;
 
+        /// <summary>
+        /// The global random generator.
+        /// </summary>
+        public static readonly Random Randy = new Random();
+
+        /// <summary>
+        /// If this property is set to 'true' the game will exit next update.
+        /// </summary>
         public bool DoExit;
 
         private GraphicsDeviceManager graphics;

@@ -50,7 +50,7 @@ namespace Canyon
             : base(game)
         {
             CenterMouse = false;
-            MouseSensitivity = 50.0f;
+            MouseSensitivity = 100.0f;
         }
 
         public override void Initialize()
@@ -112,8 +112,8 @@ namespace Canyon
                 float length = delta.Length();
                 if (length > MouseSensitivity)
                     length = MouseSensitivity;
-                else if (length < MouseSensitivity * 0.8f)
-                    length -= (MouseSensitivity) * dt;
+                else if (length < MouseSensitivity * 0.6f)
+                    length -= (MouseSensitivity/2) * dt;
                 else if (length < 0.01f)
                     length = 0;
                 delta = delta.SafeNormalize() * length;

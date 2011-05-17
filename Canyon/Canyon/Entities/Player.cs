@@ -19,8 +19,8 @@ namespace Canyon.Entities
 
     public class Player : DrawableGameComponent, IEntity, IFollowable
     {
-        public const float PitchStep = MathHelper.Pi/4;
-        public const float YawStep = MathHelper.Pi/8;
+        public const float PitchStep = MathHelper.Pi / 4; // to the power of 2
+        public const float YawStep = MathHelper.Pi / 4; // to the power of 2
         public const float RollStep = MathHelper.Pi/2;
         public const float RollCorrection = MathHelper.Pi / 16;
         public const float RollAffect = YawStep * 10;
@@ -203,40 +203,37 @@ namespace Canyon.Entities
         private void RollLogics(float dt)
         {
             float roll = this.orientation.Roll;
-            Vector3 up = Vector3.Up;
-            if( this.Up.Y < 0 )
-                up = Vector3.Down;
+            float abspitch = Math.Abs(this.orientation.Pitch);
+            //Vector3 up = Vector3.Up;
+            //if (this.Up.Y < 0)
+            //    up = Vector3.Down;
 
-            float amount = Math.Abs(roll) / MathHelper.Pi * 2;
-            if (Math.Abs(roll) > MathHelper.PiOver2)
-                amount = 2.0f - amount;
+            //float amount = Math.Abs(roll) / MathHelper.Pi * 2;
+            //if (Math.Abs(roll) > MathHelper.PiOver2)
+            //    amount = 2.0f - amount;
 
-            float direction = roll < 0 ? -1 : 1;
-            if (Math.Abs(this.orientation.Pitch) > MathHelper.PiOver2)
-                direction *= -1;
-            
-            float speedFactor = Math.Min(1, Vector3.Dot(this.Forward, Velocity));
-            
-            this.orientation.Yaw += amount * direction * speedFactor * RollAffect * dt;
+            //float direction = roll < 0 ? -1 : 1;
+            //if (abspitch > MathHelper.PiOver2)
+            //    direction *= -1;
+
+            //float speedFactor = Math.Min(1, Vector3.Dot(this.Forward, Velocity));
+
+            //this.orientation.Yaw += amount * direction * speedFactor * RollAffect * dt;
 
 
 
             // Slowly roll to level:
-            if (roll > 0 && roll < MathHelper.PiOver2)
+            float level = Math.Abs(Math.Abs(abspitch - MathHelper.PiOver2) - MathHelper.PiOver2);
+            if (level < MathHelper.PiOver4)
             {
-                this.orientation.Roll = Math.Max(0, roll - RollCorrection * dt);
-            }
-            else if( roll > -MathHelper.PiOver2 && roll < 0 )
-            {
-                this.orientation.Roll = Math.Min(0, roll + RollCorrection * dt);
-            }
-            else if (roll > -MathHelper.Pi && roll < -MathHelper.PiOver2)
-            {
-                this.orientation.Roll = Math.Max(-MathHelper.Pi, roll - RollCorrection * dt);
-            }
-            else if (roll > MathHelper.PiOver2 && roll < MathHelper.Pi)
-            {
-                this.orientation.Roll = Math.Min(MathHelper.Pi, roll + RollCorrection * dt);
+                if (roll > 0 && roll < MathHelper.PiOver4)
+                {
+                    this.orientation.Roll = Math.Max(0, roll - RollCorrection * dt);
+                }
+                else if (roll > -MathHelper.PiOver4 && roll < 0)
+                {
+                    this.orientation.Roll = Math.Min(0, roll + RollCorrection * dt);
+                }
             }
         }
 
@@ -260,19 +257,25 @@ namespace Canyon.Entities
 
         private void UpdateOrientation(float dt)
         {
+            float x2 = (Input.Look.X * Input.Look.X);
+            if (Input.Look.X < 0)
+                x2 *= -1;
+            float y2 = (Input.Look.Y * Input.Look.Y);
+            if (Input.Look.Y < 0)
+                y2 *= -1;
             if (Input.Look.X != 0)
             {
                 if (this.Up.Y < 0)
-                    orientation.Yaw += Input.Look.X * YawStep * dt;
+                    orientation.Yaw += x2 * YawStep * dt;
                 else
-                    orientation.Yaw += -Input.Look.X * YawStep * dt;
+                    orientation.Yaw += -x2 * YawStep * dt;
             }
             if (Input.Look.Y != 0)
             {
                 if ( Math.Abs(this.orientation.Roll) > MathHelper.PiOver2  )
-                    orientation.Pitch += Input.Look.Y * PitchStep * dt;
+                    orientation.Pitch += y2 * PitchStep * dt;
                 else
-                    orientation.Pitch += -Input.Look.Y * PitchStep * dt;
+                    orientation.Pitch += -y2 * PitchStep * dt;
             }
             if (Input.Movement.X != 0)
                 orientation.Roll += -Input.Movement.X * RollStep * dt;

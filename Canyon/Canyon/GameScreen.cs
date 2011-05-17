@@ -40,6 +40,9 @@ namespace Canyon
             this.Components.Add(this.player = new Player(this, Vector3.One* 30));
             this.Components.Add(new Display(Game, player));
 
+
+            this.Components.Add(new MarkerPath(this, Vector3.One * 30 + Vector3.Forward * 10, Vector3.Backward, 20));
+
             base.Initialize();
         }
 

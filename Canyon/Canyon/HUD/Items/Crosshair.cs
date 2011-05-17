@@ -28,7 +28,7 @@ namespace Canyon.HUD
 
         protected override void LoadContent()
         {
-            image = Game.Content.Load<Texture2D>("Sprites/Crosshair");
+            image = Game.Content.Load<Texture2D>("Sprites/crosshair");
             base.LoadContent();
         }
 

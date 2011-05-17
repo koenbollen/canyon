@@ -18,6 +18,7 @@ namespace Canyon.HUD
         {
             this.Player = p;
             Items = new List<Item>();
+            DrawOrder = 10;
         }
 
         protected override void LoadContent()

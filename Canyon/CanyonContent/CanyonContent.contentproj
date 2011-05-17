@@ -61,6 +61,15 @@
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
     </Compile>
+    <None Include="Models\marker.blend">
+      <Name>marker</Name>
+    </None>
+    <Compile Include="Models\marker.fbx">
+      <Name>marker</Name>
+      <Importer>FbxImporter</Importer>
+      <Processor>ModelProcessor</Processor>
+      <ProcessorParameters_RotationX>-90</ProcessorParameters_RotationX>
+    </Compile>
     <None Include="Models\ship.blend">
       <Name>ship</Name>
     </None>
@@ -110,8 +119,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Sprites\Crosshair.png">
-      <Name>Crosshair</Name>
+    <Compile Include="Sprites\crosshair.png">
+      <Name>crosshair</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
