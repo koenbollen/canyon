@@ -125,6 +125,7 @@
     <Compile Include="InputManager.cs" />
     <Compile Include="Misc\FrameCounter.cs" />
     <Compile Include="Misc\Grid.cs" />
+    <Compile Include="Misc\MathUtils.cs" />
     <Compile Include="Misc\SimpleConsole.cs" />
     <Compile Include="Misc\Utils.cs" />
     <Compile Include="Entities\Player.cs" />

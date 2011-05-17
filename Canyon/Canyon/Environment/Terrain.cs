@@ -344,15 +344,53 @@ namespace Canyon.Environment
             GraphicsDevice.Indices = index;
 
             // Draw all tiles that are visible:
-            foreach (TerrainTile tt in this.tiles)
+            for (int i = 0; i < this.tiles.Length; i++)
             {
-                if (!this.frustum.Intersects(tt.BoundingBox))
+                if (!this.frustum.Intersects(this.tiles[i].BoundingBox))
                     continue;
-                GraphicsDevice.SetVertexBuffer(tt.Buffer);
-                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, tt.Buffer.VertexCount, 0, index.IndexCount / 3 );
+                GraphicsDevice.SetVertexBuffer(this.tiles[i].Buffer);
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, this.tiles[i].Buffer.VertexCount, 0, index.IndexCount / 3);
             }
             
             base.Draw(gameTime);
+        }
+
+        public bool Intersect(Ray ray, ref float frac, ref Vector3 normal)
+        {
+            frac = float.MaxValue;
+            bool found = false;
+            for (int t = 0; t < tiles.Length; t++)
+            {
+                if (tiles[t].BoundingBox.Intersects(ray) == null)
+                    continue;
+                for (int i = 0; i < indices.Length / 3; i++)
+                {
+                    int index0 = indices[i * 3];
+                    int index1 = indices[i * 3 + 1];
+                    int index2 = indices[i * 3 + 2];
+
+                    Vector3[] triangle = new Vector3[]
+                    {
+                         tiles[t].Vertices[index0].Position,
+                         tiles[t].Vertices[index1].Position,
+                         tiles[t].Vertices[index2].Position,
+                    };
+
+                    float lfrac = 0;
+                    if (MathUtils.IntersectRayTriangle(ray, triangle, ref lfrac))
+                    {
+                        found = true;
+                        if (lfrac < frac)
+                        {
+                            frac = lfrac;
+                            Vector3 side0 = triangle[0] - triangle[2];
+                            Vector3 side1 = triangle[0] - triangle[1];
+                            normal = Vector3.Cross(side1, side0).SafeNormalize();
+                        }
+                    }
+                }
+            }
+            return found;
         }
     }
 }
