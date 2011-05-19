@@ -8,16 +8,10 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Canyon.HUD
 {
-    public class Speed : HUDItem
+    public class Speed : Item
     {
-
-        public override HUDType Type
-        {
-            get { return HUDType.Both; }
-        }
-
-        public Speed( Game game, Display d, Player p )
-            :base( game, d, p )
+        public Speed( Game game, Display d )
+            :base( game, d )
         {
         }
 
@@ -29,10 +23,15 @@ namespace Canyon.HUD
         public override void Draw(GameTime gameTime)
         {
             display.Batch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            display.Batch.DrawString(display.Font, string.Format("Speed: {0:N}", Vector3.Dot(player.Forward, player.Velocity)), this.Position+Vector2.One, Color.Black);
-            display.Batch.DrawString(display.Font, string.Format("Speed: {0:N}", Vector3.Dot(player.Forward, player.Velocity)), this.Position, Color.Yellow);
+            display.Batch.DrawString(display.Font, string.Format("Speed: {0:N}", Vector3.Dot(display.Player.Forward, display.Player.Velocity)), this.Position + Vector2.One, Color.Black);
+            display.Batch.DrawString(display.Font, string.Format("Speed: {0:N}", Vector3.Dot(display.Player.Forward, display.Player.Velocity)), this.Position, Color.Yellow);
             display.Batch.End();
             base.Draw(gameTime);
+        }
+
+        public override bool ShowInMode(PlayerMode mode)
+        {
+            return true;
         }
     }
 }

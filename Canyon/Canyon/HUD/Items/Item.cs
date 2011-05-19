@@ -7,31 +7,22 @@ using Canyon.Entities;
 
 namespace Canyon.HUD
 {
-    public enum HUDType
+    public abstract class Item : DrawableGameComponent
     {
-        FirstPerson = 1,
-        ThirdPerson = 2,
-        Both = 3,
-    }
-    public abstract class HUDItem : DrawableGameComponent
-    {
-        public abstract HUDType Type { get; }
         protected Display display;
-        protected Player player;
 
         public Vector2 Position { get; protected set; }
 
-        public HUDItem(Game game, Display d, Player p)
+        public Item(Game game, Display d)
             : base(game)
         {
             this.display = d;
-            this.player = p;
         }
 
         public override void Initialize()
         {
-            SetPosition();
             base.Initialize();
+            SetPosition();
             GraphicsDevice.DeviceReset += delegate(object s, EventArgs a)
             {
                 this.SetPosition();
@@ -42,6 +33,8 @@ namespace Canyon.HUD
         {
             this.Position = Vector2.Zero;
         }
+
+        public abstract bool ShowInMode(PlayerMode mode);
 
     }
 }

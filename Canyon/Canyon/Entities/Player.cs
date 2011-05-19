@@ -145,6 +145,23 @@ namespace Canyon.Entities
             if (Cameras[CurrentMode] is IUpdateable)
                 (Cameras[CurrentMode] as IUpdateable).Update(gameTime);
 
+
+            if (Input.IsJustDown(Keys.Space))
+            {
+                float frac = 0f;
+                Vector3 normal = Vector3.Zero;
+                Ray r = new Ray(Position, Forward);
+                bool hit = screen.Terrain.Intersect(r, ref frac, ref normal);
+                if (hit)
+                {
+                    (normal).Draw(r.Position + (r.Direction * frac), Color.Black);
+                    (r.Direction * frac).Draw(r.Position, Color.Green);
+                }
+                else
+                    (r.Direction * 100).Draw(r.Position, Color.Red);
+            }
+
+
             base.Update(gameTime);
         }
 
@@ -156,16 +173,8 @@ namespace Canyon.Entities
             else
                 CurrentMode = PlayerMode.Firstperson;
             IFollowCamera c = Cameras[CurrentMode];
-            if (CurrentMode == PlayerMode.Firstperson) // Just changed to Firstperson:
-            {
-                c.HardSet(p.GetCurrentStateAsTarget());
-                CanyonGame.Instance.ChangeCamera(c);
-            }
-            else
-            {
-                c.HardSet(p.GetCurrentStateAsTarget());
-                CanyonGame.Instance.ChangeCamera(c);
-            }
+            c.HardSet(p.GetCurrentStateAsTarget());
+            CanyonGame.Instance.ChangeCamera(c);
         }
 
         private void UpdateGravity(float dt)

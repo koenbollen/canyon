@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System;
 using System.Text;
 using Canyon.HUD;
+using Canyon.Misc;
 
 namespace Canyon
 {
@@ -18,6 +19,7 @@ namespace Canyon
 
         private string mapname;
         private Player player;
+        public Terrain Terrain { get; private set; }
 
         private string changemap;
 
@@ -33,11 +35,11 @@ namespace Canyon
             RegisterCommands();
 
             CanyonGame.Console.Trace("Loading map: " + this.mapname + "...");
-            this.Components.Add(new Terrain(Game, MapDirectory + "/" + this.mapname));
+            this.Components.Add(Terrain=new Terrain(Game, MapDirectory + "/" + this.mapname));
 
             this.Components.Add(this.player = new Player(this, Vector3.One* 30));
             this.Components.Add(new Display(Game, player));
-            
+
             base.Initialize();
         }
 
