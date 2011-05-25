@@ -27,10 +27,8 @@ namespace Canyon.Entities
         public const float Speed = 250f;
         public const float Drag = 1.9f;
 
-        private YawPitchRoll orientation;
-
         public Vector3 Position { get; protected set; }
-        public Quaternion Orientation { get { return orientation.Orientation; } }
+        public Quaternion Orientation { get; protected set; }
 
         public Vector3 Up { get { return Vector3.Transform(Vector3.Up, this.Orientation); } }
         public Vector3 Right { get { return Vector3.Transform(Vector3.Right, this.Orientation); } }
@@ -59,6 +57,7 @@ namespace Canyon.Entities
         {
             this.screen = screen;
             this.Position = position;
+            this.Orientation = Quaternion.Identity;
 
             // Setup PlayerMode and cameras:
             CurrentMode = PlayerMode.Thirdperson;
@@ -81,38 +80,6 @@ namespace Canyon.Entities
             IFollowCamera fc = Cameras[CurrentMode];
             CanyonGame.Instance.ChangeCamera(fc);
             fc.HardSet();
-
-            #region Debug commands: yaw, pitch, roll
-#if DEBUG
-            CanyonGame.Console.Commands["yaw"] = delegate(Microsoft.Xna.Framework.Game game, string[] argv, GameTime gameTime)
-            {
-                if (argv.Length < 2)
-                {
-                    CanyonGame.Console.WriteLine("usage: yaw <angle in degrees>");
-                    return;
-                }
-                this.orientation.Yaw = MathHelper.WrapAngle(MathHelper.ToRadians(float.Parse(argv[1], System.Globalization.CultureInfo.InvariantCulture)));
-            };
-            CanyonGame.Console.Commands["pitch"] = delegate(Microsoft.Xna.Framework.Game game, string[] argv, GameTime gameTime)
-            {
-                if (argv.Length < 2)
-                {
-                    CanyonGame.Console.WriteLine("usage: pitch <angle in degrees>");
-                    return;
-                }
-                this.orientation.Pitch = MathHelper.WrapAngle(MathHelper.ToRadians(float.Parse(argv[1], System.Globalization.CultureInfo.InvariantCulture)));
-            };
-            CanyonGame.Console.Commands["roll"] = delegate(Microsoft.Xna.Framework.Game game, string[] argv, GameTime gameTime)
-            {
-                if (argv.Length < 2)
-                {
-                    CanyonGame.Console.WriteLine("usage: roll <angle in degrees>");
-                    return;
-                }
-                this.orientation.Roll = MathHelper.WrapAngle(MathHelper.ToRadians(float.Parse(argv[1], System.Globalization.CultureInfo.InvariantCulture)));
-            };
-#endif
-            #endregion
 
 #if DEBUG
             Grid g = Game.Components.OfType<Grid>().First();
@@ -202,6 +169,7 @@ namespace Canyon.Entities
         /// <param name="dt"></param>
         private void RollLogics(float dt)
         {
+            /*
             float roll = this.orientation.Roll;
             float abspitch = Math.Abs(this.orientation.Pitch);
             //Vector3 up = Vector3.Up;
@@ -234,7 +202,7 @@ namespace Canyon.Entities
                 {
                     this.orientation.Roll = Math.Min(0, roll + RollCorrection * dt);
                 }
-            }
+            }*/
         }
 
         private void UpdatePhysics(float dt)
@@ -257,28 +225,24 @@ namespace Canyon.Entities
 
         private void UpdateOrientation(float dt)
         {
+            float yaw, pitch, roll;
+            yaw = pitch = roll = 0;
+
             float x2 = (Input.Look.X * Input.Look.X);
             if (Input.Look.X < 0)
                 x2 *= -1;
             float y2 = (Input.Look.Y * Input.Look.Y);
             if (Input.Look.Y < 0)
                 y2 *= -1;
+
             if (Input.Look.X != 0)
-            {
-                if (this.Up.Y < 0)
-                    orientation.Yaw += x2 * YawStep * dt;
-                else
-                    orientation.Yaw += -x2 * YawStep * dt;
-            }
+                yaw += -x2 * YawStep * dt;
             if (Input.Look.Y != 0)
-            {
-                if ( Math.Abs(this.orientation.Roll) > MathHelper.PiOver2  )
-                    orientation.Pitch += y2 * PitchStep * dt;
-                else
-                    orientation.Pitch += -y2 * PitchStep * dt;
-            }
+                pitch += -y2 * PitchStep * dt;
             if (Input.Movement.X != 0)
-                orientation.Roll += -Input.Movement.X * RollStep * dt;
+                roll += -Input.Movement.X * RollStep * dt;
+
+            this.Orientation *= Quaternion.CreateFromYawPitchRoll(yaw, pitch, roll);
         }
 
         public override void Draw(GameTime gameTime)

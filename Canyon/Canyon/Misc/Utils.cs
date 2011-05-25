@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 
 namespace Canyon.Misc
 {
@@ -102,6 +103,38 @@ namespace Canyon.Misc
         public static Vector3 Right(this Quaternion orientation)
         {
             return Vector3.Transform(Vector3.Right, orientation);
+        }
+
+        /// <summary>
+        /// Return the Yaw value of a Quaternion.
+        /// </summary>
+        /// <param name="orientation">The orientation to calculate a yaw from.</param>
+        /// <returns>The resulting Yaw value.</returns>
+        public static float GetYaw(this Quaternion orientation)
+        {
+            return (float)Math.Asin(-2 * (orientation.X * orientation.Z + orientation.W * orientation.Y));
+        }
+
+        /// <summary>
+        /// Return the Pitch value of a Quaternion.
+        /// </summary>
+        /// <param name="orientation">The orientation to calculate a pitch from.</param>
+        /// <returns>The resulting Pitch value.</returns>
+        public static float GetPitch(this Quaternion orientation)
+        {
+            return (float)Math.Atan2(2 * (orientation.Y * orientation.Z + orientation.W * orientation.X),
+                orientation.W * orientation.W - orientation.X * orientation.X - orientation.Y * orientation.Y + orientation.Z * orientation.Z);
+        }
+
+        /// <summary>
+        /// Return the Roll value of a Quaternion.
+        /// </summary>
+        /// <param name="orientation">The orientation to calculate a roll from.</param>
+        /// <returns>The resulting Roll value.</returns>
+        public static float GetRoll(this Quaternion orientation)
+        {
+            return (float)Math.Atan2(2 * (orientation.X * orientation.Y + orientation.W * orientation.Z),
+                orientation.W * orientation.W + orientation.X * orientation.X - orientation.Y * orientation.Y - orientation.Z * orientation.Z);
         }
 
     }
