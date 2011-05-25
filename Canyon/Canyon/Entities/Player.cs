@@ -23,7 +23,6 @@ namespace Canyon.Entities
         public const float YawStep = MathHelper.Pi / 4; // to the power of 2
         public const float RollStep = MathHelper.Pi/2;
         public const float RollCorrection = MathHelper.Pi / 16;
-        public const float RollAffect = YawStep * 10;
         public const float Speed = 250f;
         public const float Drag = 1.9f;
 
@@ -163,46 +162,28 @@ namespace Canyon.Entities
 
         /// <summary>
         /// Apply some logics on the Roll of the ship. When the 
-        /// roll isn't level the angle will result in a certain 
-        /// amount of yaw and the roll is leveled back to 0.
+        /// roll isn't level the roll is leveled back to 0.
         /// </summary>
         /// <param name="dt"></param>
         private void RollLogics(float dt)
         {
-            /*
-            float roll = this.orientation.Roll;
-            float abspitch = Math.Abs(this.orientation.Pitch);
-            //Vector3 up = Vector3.Up;
-            //if (this.Up.Y < 0)
-            //    up = Vector3.Down;
-
-            //float amount = Math.Abs(roll) / MathHelper.Pi * 2;
-            //if (Math.Abs(roll) > MathHelper.PiOver2)
-            //    amount = 2.0f - amount;
-
-            //float direction = roll < 0 ? -1 : 1;
-            //if (abspitch > MathHelper.PiOver2)
-            //    direction *= -1;
-
-            //float speedFactor = Math.Min(1, Vector3.Dot(this.Forward, Velocity));
-
-            //this.orientation.Yaw += amount * direction * speedFactor * RollAffect * dt;
-
-
-
+            float roll = 0;
+            float realroll = this.Orientation.GetRoll();
+            float abspitch = Math.Abs(this.Orientation.GetPitch());
+            
             // Slowly roll to level:
             float level = Math.Abs(Math.Abs(abspitch - MathHelper.PiOver2) - MathHelper.PiOver2);
             if (level < MathHelper.PiOver4)
             {
-                if (roll > 0 && roll < MathHelper.PiOver4)
-                {
-                    this.orientation.Roll = Math.Max(0, roll - RollCorrection * dt);
-                }
-                else if (roll > -MathHelper.PiOver4 && roll < 0)
-                {
-                    this.orientation.Roll = Math.Min(0, roll + RollCorrection * dt);
-                }
-            }*/
+                if (realroll > 0 && realroll < MathHelper.PiOver4)
+                    roll = Math.Max(0, realroll - RollCorrection * dt);
+                else if (realroll > -MathHelper.PiOver4 && realroll < 0)
+                    roll = Math.Min(0, realroll + RollCorrection * dt);
+                else
+                    roll = realroll;
+                roll = roll - realroll;
+            }
+            this.Orientation *= Quaternion.CreateFromYawPitchRoll(0, 0, roll);
         }
 
         private void UpdatePhysics(float dt)
