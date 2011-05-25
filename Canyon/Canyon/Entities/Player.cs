@@ -17,47 +17,29 @@ namespace Canyon.Entities
         Thirdperson
     }
 
-    public class Player : DrawableGameComponent, IEntity, IFollowable
+    public class Player : BaseEntity
     {
         public const float PitchStep = MathHelper.Pi / 4; // to the power of 2
         public const float YawStep = MathHelper.Pi / 4; // to the power of 2
         public const float RollStep = MathHelper.Pi/2;
         public const float RollCorrection = MathHelper.Pi / 16;
         public const float Speed = 250f;
-        public const float Drag = 1.9f;
+        //TODO: public const float Drag = 1.9f;
 
-        public Vector3 Position { get; protected set; }
-        public Quaternion Orientation { get; protected set; }
-
-        public Vector3 Up { get { return Vector3.Transform(Vector3.Up, this.Orientation); } }
-        public Vector3 Right { get { return Vector3.Transform(Vector3.Right, this.Orientation); } }
-        public Vector3 Left { get { return Vector3.Transform(Vector3.Left, this.Orientation); } }
-        public Vector3 Forward { get { return Vector3.Transform(Vector3.Forward, this.Orientation); } }
-
-        // Semi physics:
-        public Vector3 Velocity { get; protected set; }
-        public Vector3 Acceleration { get; protected set; }
-        public Vector3 Force { get; protected set; }
-        public float Mass { get; protected set; }
         public float Thrust { get; protected set; }
 
         public float AntiGravity { get; set; }
 
-        private Model model;
-
         public PlayerMode CurrentMode { get; private set; }
+
+        private Rocket.RocketDeploy rockets;
 
         private Dictionary<PlayerMode, IFollowCamera> Cameras;
 
         protected InputManager Input;
-        protected GameScreen screen;
-        public Player(GameScreen screen, Vector3 position)
-            : base(screen.Game)
+        public Player(GameScreen screen, Vector3? position)
+            : base(screen, position)
         {
-            this.screen = screen;
-            this.Position = position;
-            this.Orientation = Quaternion.Identity;
-
             // Setup PlayerMode and cameras:
             CurrentMode = PlayerMode.Thirdperson;
             Cameras = new Dictionary<PlayerMode, IFollowCamera>();
@@ -66,15 +48,19 @@ namespace Canyon.Entities
             foreach (IFollowCamera c in Cameras.Values)
                 if (c is IGameComponent)
                     screen.Components.Add(c as IGameComponent);
+            this.Drag = 1.5f;
+            this.Mass = 15.0f;
+            this.AntiGravity = 1;
+            this.AffectedByGravity = false;
+
+            rockets = new Rocket.RocketDeploy(screen, this);
+            screen.Components.Add(rockets);
         }
 
         public override void Initialize()
         {
             Input = CanyonGame.Input;
             Input.CenterMouse = true;
-
-            this.Mass = 15.0f;
-            this.AntiGravity = 1;
 
             IFollowCamera fc = Cameras[CurrentMode];
             CanyonGame.Instance.ChangeCamera(fc);
@@ -104,20 +90,20 @@ namespace Canyon.Entities
 
             this.UpdateOrientation(dt);
             RollLogics(dt);
+
             UpdateGravity(dt);
-            UpdatePhysics(dt);
-            ClearForces();
+            float thrust = Speed * MathHelper.Clamp(-Input.Movement.Z, 0, 1);
+            this.AddForce(this.Forward * thrust);
 
             if (Cameras[CurrentMode] is IUpdateable)
                 (Cameras[CurrentMode] as IUpdateable).Update(gameTime);
-
 
             if (Input.IsJustDown(Keys.Space))
             {
                 float frac = 0f;
                 Vector3 normal = Vector3.Zero;
                 Ray r = new Ray(Position, Forward);
-                bool hit = screen.Terrain.Intersect(r, ref frac, ref normal);
+                bool hit = Screen.Terrain.Intersect(r, ref frac, ref normal);
                 if (hit)
                 {
                     (normal).Draw(r.Position + (r.Direction * frac), Color.Black);
@@ -127,6 +113,10 @@ namespace Canyon.Entities
                     (r.Direction * 100).Draw(r.Position, Color.Red);
             }
 
+            if (Input.LaunchRocket)
+            {
+                this.rockets.Deploy();
+            }
 
             base.Update(gameTime);
         }
@@ -154,9 +144,9 @@ namespace Canyon.Entities
                 this.AntiGravity -= .1f;
             }
 
-            this.Force += CanyonGame.Gravity;
+            this.AddForce(CanyonGame.Gravity);
             this.AntiGravity = MathHelper.Clamp(this.AntiGravity, 0, 2);
-            this.Force += -CanyonGame.Gravity * this.AntiGravity;
+            this.AddForce(-CanyonGame.Gravity * this.AntiGravity);
         }
 
 
@@ -186,24 +176,6 @@ namespace Canyon.Entities
             this.Orientation *= Quaternion.CreateFromYawPitchRoll(0, 0, roll);
         }
 
-        private void UpdatePhysics(float dt)
-        {
-            Thrust = Speed * MathHelper.Clamp(-Input.Movement.Z, 0, 1);
-            this.Force += this.Forward * Thrust;
-            this.Acceleration += Force / Mass;
-            this.Acceleration -= Velocity * Drag;
-
-            this.Velocity += this.Acceleration * dt;
-            this.Position += this.Velocity * dt;
-
-        }
-
-        private void ClearForces()
-        {
-            this.Force = Vector3.Zero;
-            this.Acceleration = Vector3.Zero;
-        }
-
         private void UpdateOrientation(float dt)
         {
             float yaw, pitch, roll;
@@ -226,32 +198,10 @@ namespace Canyon.Entities
             this.Orientation *= Quaternion.CreateFromYawPitchRoll(yaw, pitch, roll);
         }
 
-        public override void Draw(GameTime gameTime)
+        protected override void ApplyEffect(BasicEffect effect)
         {
-            Matrix world = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(this.Position);
-
-            Matrix[] transforms = new Matrix[this.model.Bones.Count];
-            this.model.CopyAbsoluteBoneTransformsTo(transforms);
-
-            GraphicsDevice.BlendState = BlendState.AlphaBlend;
-            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-
-            foreach (ModelMesh mesh in model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.World = transforms[mesh.ParentBone.Index] * world;
-                    effect.View = CanyonGame.Camera.View;
-                    effect.Projection = CanyonGame.Camera.Projection;
-                    effect.EnableDefaultLighting();
-                    effect.PreferPerPixelLighting = true;
-                    effect.DiffuseColor = Color.DarkMagenta.ToVector3();
-                }
-
-                mesh.Draw();
-            }
-
-            base.Draw(gameTime);
+            effect.DiffuseColor = Color.DarkMagenta.ToVector3();
+            base.ApplyEffect(effect);
         }
 
     }

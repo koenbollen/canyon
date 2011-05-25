@@ -46,6 +46,14 @@ namespace Canyon
             }
         }
 
+        public bool LaunchRocket
+        {
+            get
+            {
+                return cms.RightButton == ButtonState.Pressed && pms.RightButton == ButtonState.Released;
+            }
+        }
+
         public InputManager(Game game)
             : base(game)
         {

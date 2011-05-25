@@ -70,6 +70,16 @@
       <Processor>ModelProcessor</Processor>
       <ProcessorParameters_RotationX>-90</ProcessorParameters_RotationX>
     </Compile>
+    <None Include="Models\rocket.blend">
+      <Name>rocket</Name>
+    </None>
+    <Compile Include="Models\rocket.fbx">
+      <Name>rocket</Name>
+      <Importer>FbxImporter</Importer>
+      <Processor>ModelProcessor</Processor>
+      <ProcessorParameters_Scale>0.1</ProcessorParameters_Scale>
+      <ProcessorParameters_RotationX>-90</ProcessorParameters_RotationX>
+    </Compile>
     <None Include="Models\ship.blend">
       <Name>ship</Name>
     </None>

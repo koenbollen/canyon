@@ -3,6 +3,7 @@ using Canyon.Screens;
 using Canyon.Entities;
 using Canyon.Environment;
 using System.IO;
+using System.Linq;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System;
@@ -37,7 +38,7 @@ namespace Canyon
             CanyonGame.Console.Trace("Loading map: " + this.mapname + "...");
             this.Components.Add(Terrain=new Terrain(Game, MapDirectory + "/" + this.mapname));
 
-            this.Components.Add(this.player = new Player(this, Vector3.One* 30));
+            this.Components.Add(this.player = new Player(this, Vector3.One * 30));
             this.Components.Add(new Display(Game, player));
 
 
@@ -133,6 +134,7 @@ namespace Canyon
                 return;
             }
 
+            //CanyonGame.Console.Debug(" # rockets: " + this.Components.OfType<Rocket>().Count());
             base.Update(gameTime);
         }
 
