@@ -392,5 +392,77 @@ namespace Canyon.Environment
             }
             return found;
         }
+
+        public bool Overlap(BoundingSphere sphere)
+        {
+
+            for (int t = 0; t < tiles.Length; t++)
+            {
+                if (!tiles[t].BoundingBox.Intersects(sphere))
+                    continue;
+                for (int i = 0; i < indices.Length / 3; i++)
+                {
+                    int index0 = indices[i * 3];
+                    int index1 = indices[i * 3 + 1];
+                    int index2 = indices[i * 3 + 2];
+
+                    Vector3[] triangle = new Vector3[]
+                    {
+                         tiles[t].Vertices[index0].Position,
+                         tiles[t].Vertices[index1].Position,
+                         tiles[t].Vertices[index2].Position,
+                    };
+
+                    for(int j = 0; j < 3; j++ )
+                        if( sphere.Contains(triangle[j]) != ContainmentType.Disjoint )
+                            return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool Overlap(BoundingBox bb, Matrix world)
+        {
+            Vector3 half = (bb.Max - bb.Min) / 2.0f;
+            BoundingBox transformed = new BoundingBox(bb.Min + world.Translation, bb.Max + world.Translation);
+
+            BoundingSphere sphere = BoundingSphere.CreateFromBoundingBox(bb);
+            sphere.Center = world.Translation;
+
+            for (int t = 0; t < tiles.Length; t++)
+            {
+                if (!tiles[t].BoundingBox.Intersects(sphere))
+                    continue;
+                if (!tiles[t].BoundingBox.Intersects(transformed))
+                    continue;
+                for (int i = 0; i < indices.Length / 3; i++)
+                {
+                    int index0 = indices[i * 3];
+                    int index1 = indices[i * 3 + 1];
+                    int index2 = indices[i * 3 + 2];
+
+                    Vector3[] triangle = new Vector3[]
+                    {
+                         tiles[t].Vertices[index0].Position,
+                         tiles[t].Vertices[index1].Position,
+                         tiles[t].Vertices[index2].Position,
+                    };
+
+                    bool inSphere = false;
+                    for (int j = 0; !inSphere && j < 3; j++)
+                        if (sphere.Contains(triangle[j]) != ContainmentType.Disjoint)
+                            inSphere = true;
+                    if (!inSphere)
+                        continue;
+                    CanyonGame.Console.Debug("InSphere");
+
+                    if (MathUtils.OverlapBoxTriangle(world, half, triangle))
+                        return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

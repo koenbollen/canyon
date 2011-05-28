@@ -80,7 +80,6 @@ namespace Canyon
 #if DEBUG
             this.Components.Add(new FrameCounter(this));
             this.Components.Add(new VectorDrawer(this));
-            this.Components.Add(new Grid(this, (int)(FarPlane/20), 10));
 #endif // !DEBUG
 
             // Initialize the sceen manager:

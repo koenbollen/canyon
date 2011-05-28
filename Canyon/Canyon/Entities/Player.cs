@@ -24,7 +24,6 @@ namespace Canyon.Entities
         public const float RollStep = MathHelper.Pi/2;
         public const float RollCorrection = MathHelper.Pi / 16;
         public const float Speed = 250f;
-        //TODO: public const float Drag = 1.9f;
 
         public float Thrust { get; protected set; }
 
@@ -35,6 +34,8 @@ namespace Canyon.Entities
         private Rocket.RocketDeploy rockets;
 
         private Dictionary<PlayerMode, IFollowCamera> Cameras;
+
+        private float alpha;
 
         protected InputManager Input;
         public Player(GameScreen screen, Vector3? position)
@@ -48,10 +49,12 @@ namespace Canyon.Entities
             foreach (IFollowCamera c in Cameras.Values)
                 if (c is IGameComponent)
                     screen.Components.Add(c as IGameComponent);
+
             this.Drag = 1.5f;
             this.Mass = 15.0f;
             this.AntiGravity = 1;
             this.AffectedByGravity = false;
+            this.asset = "ship";
 
             rockets = new Rocket.RocketDeploy(screen, this);
             screen.Components.Add(rockets);
@@ -66,24 +69,23 @@ namespace Canyon.Entities
             CanyonGame.Instance.ChangeCamera(fc);
             fc.HardSet();
 
-#if DEBUG
-            Grid g = Game.Components.OfType<Grid>().First();
-            if (g != null) g.Follow = this;
-#endif
+            alpha = 1;
 
             base.Initialize();
-        }
-
-        protected override void LoadContent()
-        {
-            this.model = Game.Content.Load<Model>("Models/ship");
-
-            base.LoadContent();
         }
 
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            Matrix world = Matrix.CreateFromQuaternion(this.Orientation) * Matrix.CreateTranslation(this.Position);
+            if (Screen.Terrain.Overlap(this.BoundingBox, world))
+            {
+                alpha = 0.2f;
+                Velocity *= 0.01f;
+            }
+            if (alpha < 1.0f)
+                alpha += dt / 2;
 
             if (Input.TogglePlayerMode)
                 ToggleMode();
@@ -114,9 +116,7 @@ namespace Canyon.Entities
             }
 
             if (Input.LaunchRocket)
-            {
                 this.rockets.Deploy();
-            }
 
             base.Update(gameTime);
         }
@@ -200,6 +200,7 @@ namespace Canyon.Entities
 
         protected override void ApplyEffect(BasicEffect effect)
         {
+            effect.Alpha = alpha;
             effect.DiffuseColor = Color.DarkMagenta.ToVector3();
             base.ApplyEffect(effect);
         }

@@ -41,8 +41,29 @@ namespace Canyon
             this.Components.Add(this.player = new Player(this, Vector3.One * 30));
             this.Components.Add(new Display(Game, player));
 
+#if DEBUG
+            this.Components.Add(new Grid(Game, (int)(CanyonGame.FarPlane / 20), 10, this.player));
+#endif
 
             this.Components.Add(new MarkerPath(this, Vector3.One * 30 + Vector3.Forward * 10, Vector3.Backward, 20));
+
+            Vector3 box = new Vector3(2, 5, 4);
+            Matrix world = Matrix.CreateRotationX(MathHelper.Pi / 16) * Matrix.CreateTranslation(new Vector3(10, 32, 8));
+
+            Vector3[] vertices = new Vector3[] {
+                                     new Vector3( 10, 30, 0), 
+                                     new Vector3( 8, 35, 6 ),
+                                     new Vector3( 10, 40, 4 ), 
+                                 };
+
+            Color tricolor = Color.White;
+            if (MathUtils.OverlapBoxTriangle(world, box, vertices))
+                tricolor = Color.Black;
+
+            VectorDrawer.AddBox(box, world);
+            VectorDrawer.AddVector(vertices[0], vertices[1] - vertices[0], tricolor);
+            VectorDrawer.AddVector(vertices[1], vertices[2] - vertices[1], tricolor);
+            VectorDrawer.AddVector(vertices[2], vertices[0] - vertices[2], tricolor);
 
             base.Initialize();
         }

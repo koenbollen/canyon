@@ -1,5 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Linq;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Canyon.Misc
 {
@@ -135,6 +137,32 @@ namespace Canyon.Misc
         {
             return (float)Math.Atan2(2 * (orientation.X * orientation.Y + orientation.W * orientation.Z),
                 orientation.W * orientation.W + orientation.X * orientation.X - orientation.Y * orientation.Y - orientation.Z * orientation.Z);
+        }
+
+
+
+        /// <summary>
+        /// Return all the elements of a certain type.
+        /// </summary>
+        /// <param name="meshPart"></param>
+        /// <param name="usage"></param>
+        /// <returns></returns>
+        public static Vector3[] GetVertexElement(this ModelMeshPart meshPart, VertexElementUsage usage)
+        {
+            VertexDeclaration vd = meshPart.VertexBuffer.VertexDeclaration;
+            VertexElement[] elements = vd.GetVertexElements();
+
+            Func<VertexElement, bool> elementPredicate = ve => ve.VertexElementUsage == usage && ve.VertexElementFormat == VertexElementFormat.Vector3;
+            if (!elements.Any(elementPredicate))
+                return null;
+
+            VertexElement element = elements.First(elementPredicate);
+
+            Vector3[] vertexData = new Vector3[meshPart.NumVertices];
+            meshPart.VertexBuffer.GetData((meshPart.VertexOffset * vd.VertexStride) + element.Offset,
+                vertexData, 0, vertexData.Length, vd.VertexStride);
+
+            return vertexData;
         }
 
     }

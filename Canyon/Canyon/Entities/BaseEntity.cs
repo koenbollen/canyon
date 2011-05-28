@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Canyon.CameraSystem;
 using Microsoft.Xna.Framework.Graphics;
+using Canyon.Misc;
 
 namespace Canyon.Entities
 {
@@ -29,6 +30,9 @@ namespace Canyon.Entities
 
         public bool AffectedByGravity { get; protected set; }
 
+        public BoundingBox BoundingBox { get; protected set; }
+        public BoundingSphere BoundingSphere { get; protected set; }
+
         protected string asset = null;
         protected Model model = null;
         
@@ -44,10 +48,36 @@ namespace Canyon.Entities
             this.Orientation = Quaternion.Identity;
         }
 
+
         protected override void LoadContent()
         {
             if (asset != null)
                 this.model = Game.Content.Load<Model>("Models/"+asset);
+
+            Matrix[] transforms = new Matrix[this.model.Bones.Count];
+            this.model.CopyAbsoluteBoneTransformsTo(transforms);
+
+            CanyonGame.Console.Debug("Meshed: " + this.model.Meshes.Count);
+            BoundingBox = new BoundingBox();
+            BoundingSphere = new BoundingSphere();
+            for (int m = 0; m < this.model.Meshes.Count; m++)
+            {
+                ModelMesh mm = this.model.Meshes[m];
+                BoundingBox partBox = new BoundingBox();
+                for (int p = 0; p < mm.MeshParts.Count; p++)
+                {
+                    ModelMeshPart part = mm.MeshParts[p];
+                    Vector3[] vertices = part.GetVertexElement(VertexElementUsage.Position);
+                    partBox = BoundingBox.CreateFromPoints(vertices);
+                }
+                partBox.Min = Vector3.Transform(partBox.Min, transforms[mm.ParentBone.Index]);
+                partBox.Max = Vector3.Transform(partBox.Max, transforms[mm.ParentBone.Index]);
+                BoundingBox = partBox;
+                BoundingSphere = BoundingSphere.CreateMerged(BoundingSphere, mm.BoundingSphere);
+            }
+
+            CanyonGame.Console.Debug("" + BoundingBox);
+            CanyonGame.Console.Debug("" + BoundingSphere);
 
             base.LoadContent();
         }

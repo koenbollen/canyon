@@ -59,6 +59,24 @@ namespace Canyon.Misc
             return VectorDrawer.AddVector(position, direction, Color.Black);
         }
 
+        public static DrawableVector PointPoint(Vector3 start, Vector3 end, Matrix world, Color color)
+        {
+            return AddVector(Vector3.Transform(start, world), Vector3.TransformNormal((end - start), world), color);
+        }
+
+        public static void AddBox(Vector3 half, Matrix world)
+        {
+            PointPoint(-half, half * ((Vector3.UnitX * 2) - Vector3.One), world, Color.Red);
+            PointPoint(-half, half * ((Vector3.UnitY * 2) - Vector3.One), world, Color.Red);
+            PointPoint(-half, half * ((Vector3.UnitZ * 2) - Vector3.One), world, Color.Red);
+
+            PointPoint(half, -half * ((Vector3.UnitX * 2) - Vector3.One), world, Color.Green);
+            PointPoint(half, -half * ((Vector3.UnitY * 2) - Vector3.One), world, Color.Green);
+            PointPoint(half, -half * ((Vector3.UnitZ * 2) - Vector3.One), world, Color.Green);
+            
+
+        }
+
         public static ReadOnlyCollection<DrawableVector> Vectors
         {
             get { return VectorDrawer.Instance.vectors.AsReadOnly(); }
