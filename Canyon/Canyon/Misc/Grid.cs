@@ -16,7 +16,7 @@ namespace Canyon.Misc
         private VertexBuffer buffer;
         private Matrix world;
 
-        public Grid(Game game, int size=100, float gridstep = 1, IEntity follow=null)
+        public Grid(Game game, int size, float gridstep, IEntity follow)
             : base(game)
         {
             this.size = size;
