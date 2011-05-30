@@ -11,6 +11,8 @@ using System.Text;
 using Canyon.HUD;
 using Canyon.Misc;
 using Canyon.Particles;
+using Canyon.Particles.Systems;
+using Canyon.Particles.Emitters;
 
 namespace Canyon
 {
@@ -51,9 +53,15 @@ namespace Canyon
             this.Components.Add(new Grid(Game, (int)(CanyonGame.FarPlane / 20), 10, this.player));
 #endif
 
-            this.Components.Add(new MarkerPath(this, Vector3.One * 30 + Vector3.Forward * 10, Vector3.Backward, 20));
 
-            this.Components.Add(new ParticleSystem(Game));
+            if (this.mapname == "riemers")
+            {
+                this.Components.Add(new MarkerPath(this, Vector3.One * 30 + Vector3.Forward * 10, Vector3.Backward, 20));
+                this.Components.Add(new SnowSystem(Game));
+                PlumeSystem ps = new PlumeSystem(Game);
+                this.Components.Add(ps);
+                this.Components.Add(new PositionEmitter(Game, ps, new Vector3( 31.2f, 6.2f, 59.76f) ));
+            }
 
             base.Initialize();
         }

@@ -57,7 +57,6 @@ namespace Canyon.Entities
             Matrix[] transforms = new Matrix[this.model.Bones.Count];
             this.model.CopyAbsoluteBoneTransformsTo(transforms);
 
-            CanyonGame.Console.Debug("Meshed: " + this.model.Meshes.Count);
             BoundingBox = new BoundingBox();
             BoundingSphere = new BoundingSphere();
             for (int m = 0; m < this.model.Meshes.Count; m++)
@@ -75,9 +74,6 @@ namespace Canyon.Entities
                 BoundingBox = partBox;
                 BoundingSphere = BoundingSphere.CreateMerged(BoundingSphere, mm.BoundingSphere);
             }
-
-            CanyonGame.Console.Debug("" + BoundingBox);
-            CanyonGame.Console.Debug("" + BoundingSphere);
 
             base.LoadContent();
         }

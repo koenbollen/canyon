@@ -66,10 +66,30 @@
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
     </Compile>
-    <Compile Include="FX\physics.fx">
-      <Name>physics</Name>
+    <Compile Include="FX\physics\cube.fx">
+      <Name>cube</Name>
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
+    </Compile>
+    <Content Include="FX\physics\common.h">
+      <Name>common</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Content>
+    <Content Include="FX\physics\techniques.h">
+      <Name>techniques</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Content>
+    <Compile Include="FX\physics\plume.fx">
+      <Name>plume</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
+    <Compile Include="Particles\smoke.png">
+      <Name>smoke</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
     </Compile>
     <None Include="Models\marker.blend">
       <Name>marker</Name>

@@ -2,10 +2,11 @@
 float4x4 World : WORLD;
 float4x4 View : VIEW;
 float4x4 Projection : PROJECTION;
-float3 CameraPosition;
+float3 CameraPosition : POSITION;
 
-float ScreenHeight : SCREEN_HEIGHT= 600;
-float SizeModifier : PARTICLE_SIZE = .5f;
+float SizeModifier = 1;
+float MaxLife = 5.0;
+float FadeAlpha = 0.0;
 
 texture ParticleTexture;
 sampler particleSampler = sampler_state
@@ -43,17 +44,20 @@ sampler velocitySampler = sampler_state
 struct TransformInput
 {
     float4 VertexData : POSITION0;
+    float4 Color : COLOR0;
 	float3 TexCoord : TEXCOORD0;
 };
 
 struct TransformOutput
 {    
 	float4 Position : POSITION0;
+    float4 Color : COLOR0;
 	float3 TexCoord : TEXCOORD0;
 };
 
 struct PixelShaderInput
 {    
+    float4 Color : COLOR0;
 	float2 TexCoord : TEXCOORD0;
 };
 
@@ -65,6 +69,10 @@ TransformOutput Transform(TransformInput input)
 
 
 	float4 realPosition = tex2Dlod( positionSampler, float4(input.VertexData.x, input.VertexData.y,0,0) );
+	if( realPosition.w <= 0 )
+		return output;
+		
+	float age = realPosition.w;
 	realPosition.w = 1; // not needed
 	realPosition = mul(realPosition, World);
 
@@ -94,16 +102,19 @@ TransformOutput Transform(TransformInput input)
 	}
 
 	output.Position = mul(realPosition, viewProjection);
-
+	
 	output.TexCoord = input.TexCoord;
+	output.Color = input.Color;
+	if( FadeAlpha > 0 )
+		output.Color.a *= clamp(age/FadeAlpha, 0, 1);
 
 	return output;
 }
 
 float4 ApplyTexture(PixelShaderInput input) : COLOR0
 {           
-	float4 output=tex2D(particleSampler, input.TexCoord);
-	return output;
+	float4 output=tex2D(particleSampler, input.TexCoord) * input.Color;
+	return output * input.Color.a;
 }
 
 technique TransformAndTexture

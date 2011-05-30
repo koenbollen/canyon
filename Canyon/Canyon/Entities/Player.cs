@@ -65,6 +65,11 @@ namespace Canyon.Entities
             Input = CanyonGame.Input;
             Input.CenterMouse = true;
 
+
+            // Face the other way, this should be in a level type or something alike:
+            this.Orientation = Quaternion.CreateFromYawPitchRoll(MathHelper.Pi, 0, 0);
+
+
             IFollowCamera fc = Cameras[CurrentMode];
             CanyonGame.Instance.ChangeCamera(fc);
             fc.HardSet();
@@ -110,6 +115,7 @@ namespace Canyon.Entities
                 {
                     (normal).Draw(r.Position + (r.Direction * frac), Color.Black);
                     (r.Direction * frac).Draw(r.Position, Color.Green);
+                    CanyonGame.Console.WriteLine("Hit: " + (r.Position + (r.Direction * frac)));
                 }
                 else
                     (r.Direction * 100).Draw(r.Position, Color.Red);

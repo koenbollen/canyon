@@ -455,7 +455,6 @@ namespace Canyon.Environment
                             inSphere = true;
                     if (!inSphere)
                         continue;
-                    CanyonGame.Console.Debug("InSphere");
 
                     if (MathUtils.OverlapBoxTriangle(world, half, triangle))
                         return true;
